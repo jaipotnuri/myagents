@@ -1,0 +1,31 @@
+{
+  "name": "Jai",
+  "email": "jaipotnuri7@gmail.com",
+  "timezone": "auto",
+  "project": "myagents",
+  "projectGoal": "Daily-use agent workspace for research, learning, and user impact",
+  "outputDir": "outputs",
+  "preferredOutputFormats": {
+    "research": "markdown",
+    "writing": "markdown",
+    "learning": "markdown",
+    "code": "files"
+  },
+  "interests": [
+    "AI agents",
+    "research automation",
+    "learning systems",
+    "productivity"
+  ],
+  "dailyDigest": {
+    "enabled": true,
+    "sources": ["gmail", "google-calendar"],
+    "format": "brief",
+    "timeHorizon": "today+tomorrow"
+  },
+  "agentDefaults": {
+    "saveOutputs": true,
+    "useMemory": true,
+    "verbosity": "concise"
+  }
+}
