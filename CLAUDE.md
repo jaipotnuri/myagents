@@ -25,7 +25,8 @@ myagents/
 │   │   ├── code-agent.md        # Coding & engineering agent
 │   │   ├── planner.md           # Multi-phase planning specialist
 │   │   ├── agent-architect.md   # Agent design & architecture specialist
-│   │   └── loop-operator.md     # Autonomous loop monitor & controller
+│   │   ├── loop-operator.md     # Autonomous loop monitor & controller
+│   │   └── notes-manager.md     # Apple Notes "2026 - To Do" CRUD + daily email digest
 │   ├── commands/
 │   │   └── build-agent.md       # Workflow: new agent from idea to shipped
 │   ├── rules/
@@ -54,6 +55,7 @@ myagents/
 | `planner` | "use the planner agent" | Plan complex multi-step tasks, agent builds, campaigns |
 | `agent-architect` | "use the agent-architect agent" | Design new agents, multi-agent systems, architecture decisions |
 | `loop-operator` | "use the loop-operator agent" | Monitor and control autonomous multi-step agent loops |
+| `notes-manager` | "use the notes-manager agent" | Add/edit/delete items in "2026 - To Do" Apple Note; daily top-2 email digest |
 
 ## Skills
 
