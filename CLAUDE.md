@@ -170,6 +170,32 @@ Skipped because they're for software team workflows or language-specific pattern
 - ECC internal tooling (skill-comply, skill-stocktake, configure-ecc, rules-distill)
 - Platform-specific media skills (remotion-video-creation, fal-ai-media, videodb) — add if needed
 
+## Projects
+
+Self-contained projects live in `projects/`. Each has its own `CLAUDE.md`, agents, data, and outputs. When working inside a project folder, its `CLAUDE.md` takes precedence for project-specific rules.
+
+| Project | Folder | Purpose |
+|---------|--------|---------|
+| `job-search` | `projects/job-search/` | AI Engineer job search — built on career-ops. Scan portals, evaluate JDs, tailor CV, apply. |
+
+### Job Search Project (projects/job-search/)
+
+Built on top of [career-ops](https://github.com/santifer/career-ops) by santifer. Full pipeline: scan → evaluate → tailor CV → apply.
+
+**Quick commands (run from `projects/job-search/`):**
+- Paste a job URL → auto-evaluates with A-F scoring + generates tailored CV PDF
+- `/career-ops scan` → scan all configured portals for new AI Engineer roles
+- `/career-ops tracker` → view application status overview
+- `/career-ops batch` → batch evaluate multiple jobs in parallel
+
+**Key files to fill in first:**
+1. `cv.md` — your master CV (at project root)
+2. `config/profile.yml` — personal info, comp targets, narrative
+3. `modes/_profile.md` — archetype framing (pre-filled for AI Engineer)
+4. `portals.yml` — job boards and companies (pre-configured, 45+ AI companies)
+
+---
+
 ## Adding New Agents
 
 1. Use `/build-agent` command or the `agent-architect` agent to design it
