@@ -1,0 +1,83 @@
+# Career-Ops Profile — Jai Potnuri
+# Targeting: AI Engineer roles (Senior / Staff level, Remote, US market)
+
+candidate:
+  full_name: "Jai Potnuri"
+  email: "jaipotnuri7@gmail.com"
+  phone: "+1(858)-322-3657"                          # add when ready
+  location: "Raleigh-Durham, NC"                       # e.g. "Austin, TX" or "Remote, US"
+  linkedin: "www.linkedin.com/in/jaipotnuri"                       # e.g. linkedin.com/in/jaipotnuri
+  portfolio_url: ""                  # personal site or portfolio
+  github: "https://github.com/jaipotnuri"                         # e.g. github.com/jaipotnuri
+  twitter: ""                        # optional
+
+target_roles:
+  primary:
+    - "Senior AI Engineer"
+    - "Staff AI Engineer"
+    - "Senior ML Engineer"
+    - "LLM Engineer"
+    - "Applied AI Engineer"
+    - "AI Engineer"
+  archetypes:
+    - name: "AI/LLM Engineer"
+      level: "Senior/Staff"
+      fit: "primary"
+    - name: "Agentic Systems Engineer"
+      level: "Senior"
+      fit: "primary"
+    - name: "AI Platform / LLMOps Engineer"
+      level: "Senior"
+      fit: "secondary"
+    - name: "Applied / GenAI Engineer"
+      level: "Senior/Staff"
+      fit: "primary"
+
+narrative:
+  headline: "Senior Software Engineer shipping production AI systems at Fidelity — going deep on LLMs and agents"
+  exit_story: >
+    6+ years building enterprise systems, the last 2 fully in production AI —
+    GraphRAG at 5,000-user scale, multi-model LLM pipelines (FinBERT, GPT-4, Claude, Gemini),
+    anomaly detection, and GPT-4-powered test generation. Not transitioning into AI — already in it.
+    Looking for a role where AI is the entire product, not a feature layer on top of something else.
+  superpowers:
+    - "Production AI engineering in regulated environments (Fidelity-scale, 5K+ users)"
+    - "Multi-model LLM orchestration — FinBERT, GPT-4, Claude, Gemini in a single pipeline"
+    - "GraphRAG and RAG architecture from scratch — Microsoft GraphRAG + LanceDB in prod"
+    - "Event-driven AI platforms — Kafka + SQS modular design, 40% faster model integration"
+    - "Full-stack ownership — data ingestion → model → API → UI (Streamlit, Angular, FastAPI)"
+  proof_points:
+    - name: "GraphRAG Platform at Fidelity"
+      url: ""
+      hero_metric: "5,000+ enterprise users, Microsoft GraphRAG + LanceDB in production"
+    - name: "LLM Scoring Platform"
+      url: ""
+      hero_metric: "99% scoring accuracy, 40% reduction in model integration time via Kafka+SQS"
+    - name: "Text Indexing Pipeline"
+      url: ""
+      hero_metric: "500K+ SEC/ESG documents indexed via multi-stage AWS Lambda pipeline"
+    - name: "TestPyJet — GPT-4 Test Generation"
+      url: ""
+      hero_metric: "Code coverage lifted from <20% to 80% using GPT-4 automation"
+    - name: "Equity Research Automation Tool"
+      url: ""
+      hero_metric: "50% reduction in manual review time for 30+ analysts"
+
+compensation:
+  target_range: ""     # fill in: e.g. "$160K-$200K"
+  currency: "USD"
+  minimum: ""          # fill in: walk-away number
+  location_flexibility: "Remote preferred, open to hybrid, on-site, and relocation"
+
+location:
+  country: "United States"
+  city: "Raleigh-Durham, NC"
+  timezone: "EST"
+  visa_status: "Sponsorship needed"
+  work_mode:
+    preferred: "Remote"
+    acceptable: "Hybrid, On-site, Relocation"
+    not_acceptable: ""
+
+language:
+  modes_dir: "modes"    # Use English modes (default)

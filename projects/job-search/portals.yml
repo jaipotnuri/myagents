@@ -1,0 +1,524 @@
+# Portal Scanner Configuration — Jai Potnuri
+# Target: Senior AI Engineer / LLM Engineer, US market
+# Last audited: 2026-04-08
+#
+# Strategy (3 levels):
+#   1. Playwright → careers_url of each company (real-time, reliable)
+#   2. Greenhouse API → structured JSON (fast, Greenhouse-only)
+#   3. WebSearch with site: filters (broad discovery)
+#
+# REMOVED (non-US or dead URLs):
+#   Cognigy, Aleph Alpha, Faculty, Travelperk, Qonto, Forto, Vinted,
+#   Tinybird, Clarity AI, GetYourGuide, HelloFresh, N26, Trade Republic,
+#   SumUp, Helsing, Speechmatics, PhysicsX, Wayve, Scandit, Cradle,
+#   Ada (dead board), Temporal (0 jobs), Factorial (dead board)
+
+# ---------------------------------------------------------------------------
+# Title filter
+# At least 1 positive must match AND 0 negatives must match (case-insensitive)
+# ---------------------------------------------------------------------------
+
+title_filter:
+  positive:
+    - "AI Engineer"
+    - "LLM Engineer"
+    - "ML Engineer"
+    - "Machine Learning Engineer"
+    - "Applied AI Engineer"
+    - "GenAI Engineer"
+    - "Generative AI Engineer"
+    - "AI Software Engineer"
+    - "LLMOps"
+    - "MLOps"
+    - "RAG"
+    - "Agentic"
+    - "AI Agent"
+    - "Foundation Model"
+    - "Applied ML"
+    - "AI Platform"
+    - "AI Infrastructure"
+    - "AI Solutions Engineer"
+    - "Forward Deployed"
+  negative:
+    - "Junior"
+    - "Intern"
+    - "Data Analyst"
+    - "Data Scientist"
+    - "Research Scientist"
+    - "Manager"
+    - "Director"
+    - "VP "
+    - ".NET"
+    - "Java "
+    - "iOS"
+    - "Android"
+    - "PHP"
+    - "Ruby"
+    - "Embedded"
+    - "Firmware"
+    - "FPGA"
+    - "Blockchain"
+    - "Web3"
+    - "Crypto"
+    - "SAP "
+    - "COBOL"
+    - "Mainframe"
+  seniority_boost:
+    - "Senior"
+    - "Staff"
+    - "Principal"
+    - "Lead"
+    - "Head of"
+
+# ---------------------------------------------------------------------------
+# Search queries — broad discovery across job boards
+# ---------------------------------------------------------------------------
+
+search_queries:
+  - name: Ashby — AI Engineer
+    query: 'site:jobs.ashbyhq.com "AI Engineer" OR "LLM Engineer" OR "Applied AI" US OR remote'
+    enabled: true
+
+  - name: Ashby — Agentic & MLOps
+    query: 'site:jobs.ashbyhq.com "Agentic" OR "LLMOps" OR "MLOps" OR "AI Agent" senior'
+    enabled: true
+
+  - name: Greenhouse — AI Engineer
+    query: 'site:boards.greenhouse.io OR site:job-boards.greenhouse.io "AI Engineer" OR "LLM Engineer" OR "Applied ML" remote OR "United States"'
+    enabled: true
+
+  - name: Greenhouse — Forward Deployed & Platform
+    query: 'site:job-boards.greenhouse.io "Forward Deployed" OR "AI Platform" OR "AI Infrastructure" engineer'
+    enabled: true
+
+  - name: Lever — AI Engineer
+    query: 'site:jobs.lever.co "AI Engineer" OR "LLM Engineer" OR "MLOps" OR "Agentic" remote OR US'
+    enabled: true
+
+  - name: Wellfound — AI Engineer
+    query: 'site:wellfound.com "AI Engineer" OR "LLM Engineer" OR "ML Engineer" remote senior'
+    enabled: true
+
+  - name: LinkedIn — AI Engineer US
+    query: 'site:linkedin.com/jobs "AI Engineer" OR "LLM Engineer" OR "Applied AI Engineer" "United States" senior'
+    enabled: true
+
+  - name: FDE — All portals
+    query: '"Forward Deployed Engineer" OR "Deployed Engineer" AI site:job-boards.greenhouse.io OR site:jobs.ashbyhq.com OR site:jobs.lever.co'
+    enabled: true
+
+  - name: Voice AI — Engineer roles
+    query: 'site:job-boards.greenhouse.io OR site:jobs.ashbyhq.com "Voice AI" OR "Speech AI" "AI Engineer" OR "ML Engineer" US OR remote'
+    enabled: true
+
+# ---------------------------------------------------------------------------
+# Tracked companies — audited 2026-04-08 for US presence & live URLs
+# ---------------------------------------------------------------------------
+
+tracked_companies:
+
+  # ==========================================================================
+  # US AI LABS & FRONTIER MODEL PROVIDERS
+  # ==========================================================================
+
+  - name: Anthropic
+    careers_url: https://job-boards.greenhouse.io/anthropic
+    api: https://boards-api.greenhouse.io/v1/boards/anthropic/jobs
+    notes: "SF. Claude models. 421 open roles verified."
+    enabled: true
+
+  - name: OpenAI
+    careers_url: https://openai.com/careers
+    scan_method: websearch
+    scan_query: 'site:openai.com/careers "AI Engineer" OR "ML Engineer" OR "Applied AI"'
+    notes: "SF. GPT models, ChatGPT. US-first hiring."
+    enabled: true
+
+  - name: xAI
+    careers_url: https://x.ai/careers
+    scan_method: websearch
+    scan_query: 'site:x.ai/careers "AI Engineer" OR "ML Engineer" OR "LLM"'
+    notes: "SF. Grok models. Elon Musk. Growing fast."
+    enabled: true
+
+  - name: Cohere
+    careers_url: https://jobs.ashbyhq.com/cohere
+    notes: "Toronto + SF + remote. Enterprise LLM provider. US roles available."
+    enabled: true
+
+  - name: Mistral AI
+    careers_url: https://jobs.lever.co/mistral
+    notes: "Paris + US remote. Open-weight models. US engineering roles."
+    enabled: true
+
+  - name: AI21 Labs
+    careers_url: https://www.ai21.com/careers
+    scan_method: websearch
+    scan_query: 'site:ai21.com/careers "AI Engineer" OR "ML Engineer" OR "LLM"'
+    notes: "NYC + Tel Aviv. Jamba models. US office hires engineers."
+    enabled: true
+
+  # ==========================================================================
+  # US AI INFRASTRUCTURE & COMPUTE
+  # ==========================================================================
+
+  - name: Groq
+    careers_url: https://groq.com/careers
+    scan_method: websearch
+    scan_query: 'site:groq.com/careers "AI Engineer" OR "ML Engineer" OR "LLM" OR "inference"'
+    notes: "Austin TX. AI inference chips + cloud. LPU hardware."
+    enabled: true
+
+  - name: Modal
+    careers_url: https://jobs.ashbyhq.com/modal-labs
+    notes: "NYC. Serverless ML compute. Python-native GPU infra."
+    enabled: true
+
+  - name: Together AI
+    careers_url: https://jobs.ashbyhq.com/together-ai
+    notes: "SF. Open-source LLM platform + inference API. Fast growing."
+    enabled: true
+
+  - name: Anyscale
+    careers_url: https://jobs.ashbyhq.com/anyscale
+    notes: "SF. Ray framework + managed ML platform. Strong ML infra team."
+    enabled: true
+
+  - name: RunPod
+    careers_url: https://job-boards.greenhouse.io/runpod
+    api: https://boards-api.greenhouse.io/v1/boards/runpod/jobs
+    notes: "US-remote. GPU cloud for AI workloads. 18 open roles."
+    enabled: true
+
+  - name: Baseten
+    careers_url: https://jobs.ashbyhq.com/baseten
+    notes: "SF. Model serving platform. Deploy and scale ML models."
+    enabled: true
+
+  - name: Replicate
+    careers_url: https://jobs.ashbyhq.com/replicate
+    notes: "SF. Run ML models in the cloud via API. Popular with developers."
+    enabled: true
+
+  - name: Lambda Labs
+    careers_url: https://lambdalabs.com/careers
+    scan_method: websearch
+    scan_query: 'site:lambdalabs.com/careers "AI Engineer" OR "ML Engineer" OR "engineer"'
+    notes: "SF. GPU cloud + AI workstations. ML infra."
+    enabled: true
+
+  # ==========================================================================
+  # US ML TOOLING & OBSERVABILITY
+  # ==========================================================================
+
+  - name: Weights & Biases
+    careers_url: https://jobs.lever.co/wandb
+    notes: "SF. MLOps / experiment tracking. Used by most ML teams."
+    enabled: true
+
+  - name: Arize AI
+    careers_url: https://job-boards.greenhouse.io/arizeai
+    api: https://boards-api.greenhouse.io/v1/boards/arizeai/jobs
+    notes: "SF. AI observability + LLMOps. 30 open roles."
+    enabled: true
+
+  - name: LangChain
+    careers_url: https://jobs.ashbyhq.com/langchain
+    notes: "SF. LangChain + LangSmith framework. Core AI infra team."
+    enabled: true
+
+  - name: Pinecone
+    careers_url: https://jobs.ashbyhq.com/pinecone
+    notes: "SF. Vector database leader. Core AI infra."
+    enabled: true
+
+  - name: Hugging Face
+    careers_url: https://apply.workable.com/huggingface/
+    scan_method: websearch
+    scan_query: 'site:apply.workable.com/huggingface "engineer" OR "AI" OR "ML"'
+    notes: "NYC + Paris. ML model hub. US engineering roles available."
+    enabled: true
+
+  - name: Langfuse
+    careers_url: https://langfuse.com/careers
+    scan_method: websearch
+    scan_query: '"langfuse" careers "engineer" OR "AI" OR "LLM"'
+    notes: "Berlin + SF. LLMOps / observability. Has US remote roles."
+    enabled: true
+
+  # ==========================================================================
+  # US AI DATA & SCALE
+  # ==========================================================================
+
+  - name: Scale AI
+    careers_url: https://jobs.ashbyhq.com/scale-ai
+    notes: "SF. AI data platform. Powers frontier model training. Large eng team."
+    enabled: true
+
+  - name: Databricks
+    careers_url: https://www.databricks.com/company/careers
+    scan_method: websearch
+    scan_query: 'site:databricks.com/company/careers "AI Engineer" OR "ML Engineer" OR "LLM" OR "GenAI"'
+    notes: "SF. Data + AI platform. Mosaic AI, DBRX model. Large ML org."
+    enabled: true
+
+  - name: Hightouch
+    careers_url: https://job-boards.greenhouse.io/hightouch
+    api: https://boards-api.greenhouse.io/v1/boards/hightouch/jobs
+    notes: "SF. Data activation + AI agents. 60 open roles."
+    enabled: true
+
+  # ==========================================================================
+  # US AGENTIC AI & APPLICATIONS
+  # ==========================================================================
+
+  - name: Sierra
+    careers_url: https://jobs.ashbyhq.com/sierra
+    notes: "SF. Bret Taylor (ex-Salesforce CEO). AI customer agents."
+    enabled: true
+
+  - name: Decagon
+    careers_url: https://jobs.ashbyhq.com/decagon
+    notes: "SF. AI customer support agents. Fast growing."
+    enabled: true
+
+  - name: Glean
+    careers_url: https://job-boards.greenhouse.io/gleanwork
+    api: https://boards-api.greenhouse.io/v1/boards/gleanwork/jobs
+    notes: "Palo Alto. Enterprise AI search + agents. 183 open roles."
+    enabled: true
+
+  - name: Perplexity
+    careers_url: https://jobs.ashbyhq.com/perplexity
+    notes: "SF. AI-native search engine. Fast growing consumer + enterprise."
+    enabled: true
+
+  - name: Adept
+    careers_url: https://jobs.ashbyhq.com/adept
+    notes: "SF. Agentic AI — agents that use computers. Research + eng roles."
+    enabled: true
+
+  - name: Cognition (Devin)
+    careers_url: https://jobs.ashbyhq.com/cognition-labs
+    notes: "SF. Devin AI software engineer. Agentic coding."
+    enabled: true
+
+  - name: Harvey
+    careers_url: https://jobs.ashbyhq.com/harvey
+    notes: "SF. AI for legal + professional services. Enterprise AI eng roles."
+    enabled: true
+
+  - name: Cursor
+    careers_url: https://jobs.ashbyhq.com/anysphere
+    notes: "SF. AI code editor (Anysphere). Strong ML + infra team."
+    enabled: true
+
+  - name: Lindy
+    careers_url: https://jobs.ashbyhq.com/lindy
+    notes: "SF. AI agent platform. Automate workflows with agents."
+    enabled: true
+
+  # ==========================================================================
+  # US VOICE AI & CONVERSATIONAL AI
+  # ==========================================================================
+
+  - name: ElevenLabs
+    careers_url: https://jobs.ashbyhq.com/elevenlabs
+    notes: "NYC. Voice AI / TTS leader. Fast growing."
+    enabled: true
+
+  - name: Deepgram
+    careers_url: https://jobs.ashbyhq.com/deepgram
+    notes: "SF. Speech-to-text / TTS APIs. Core audio AI."
+    enabled: true
+
+  - name: Vapi
+    careers_url: https://jobs.ashbyhq.com/vapi
+    notes: "SF. Voice AI infrastructure for developers."
+    enabled: true
+
+  - name: Bland AI
+    careers_url: https://jobs.ashbyhq.com/bland
+    notes: "SF. AI phone agents. $65M Series B."
+    enabled: true
+
+  - name: Hume AI
+    careers_url: https://job-boards.greenhouse.io/humeai
+    api: https://boards-api.greenhouse.io/v1/boards/humeai/jobs
+    notes: "NYC. Empathic voice AI. 8 open roles."
+    enabled: true
+
+  - name: Gong
+    careers_url: https://www.gong.io/careers
+    scan_method: websearch
+    scan_query: 'site:gong.io/careers "AI Engineer" OR "ML Engineer" OR "AI"'
+    notes: "SF. Revenue intelligence + voice AI. US-first hiring."
+    enabled: true
+
+  # ==========================================================================
+  # US ENTERPRISE AI & PLATFORMS
+  # ==========================================================================
+
+  - name: Salesforce
+    careers_url: https://careers.salesforce.com
+    scan_method: websearch
+    scan_query: 'site:careers.salesforce.com "AI Engineer" OR "Forward Deployed" OR "Agentforce" OR "Einstein"'
+    notes: "SF. Agentforce AI agents platform. Large AI org."
+    enabled: true
+
+  - name: Palantir
+    careers_url: https://jobs.lever.co/palantir
+    notes: "Denver + NYC. AIP (AI platform). Forward Deployed Engineer roles."
+    enabled: true
+
+  - name: Twilio
+    careers_url: https://www.twilio.com/en-us/company/jobs
+    scan_method: websearch
+    scan_query: 'site:twilio.com/company/jobs "AI Engineer" OR "ML Engineer" OR "LLM" OR "Voice AI"'
+    notes: "SF. Voice/messaging infra + AI. US-first."
+    enabled: true
+
+  - name: Dialpad
+    careers_url: https://www.dialpad.com/careers
+    scan_method: websearch
+    scan_query: '"dialpad" "AI Engineer" OR "ML Engineer" OR "LLM" site:job-boards.greenhouse.io OR site:jobs.ashbyhq.com'
+    notes: "SF. Voice AI for business comms."
+    enabled: true
+
+  - name: LivePerson
+    careers_url: https://careers.liveperson.com
+    scan_method: websearch
+    scan_query: '"liveperson" "AI Engineer" OR "ML Engineer" OR "LLM" site:job-boards.greenhouse.io'
+    notes: "NYC. Conversational AI for enterprise. US HQ."
+    enabled: true
+
+  - name: Genesys
+    careers_url: https://www.genesys.com/careers
+    scan_method: websearch
+    scan_query: 'site:genesys.com/careers "AI Engineer" OR "ML Engineer" OR "AI"'
+    notes: "Daly City CA. Contact center cloud + AI. US HQ."
+    enabled: true
+
+  # ==========================================================================
+  # US DEVELOPER TOOLS & AI PLATFORMS
+  # ==========================================================================
+
+  - name: Retool
+    careers_url: https://retool.com/careers
+    scan_method: websearch
+    scan_query: 'site:retool.com/careers "AI Engineer" OR "ML Engineer" OR "AI"'
+    notes: "SF. Internal tools + AI. Strong eng culture."
+    enabled: true
+
+  - name: Airtable
+    careers_url: https://job-boards.greenhouse.io/airtable
+    api: https://boards-api.greenhouse.io/v1/boards/airtable/jobs
+    notes: "SF. No-code + AI platform. 57 open roles."
+    enabled: true
+
+  - name: Vercel
+    careers_url: https://job-boards.greenhouse.io/vercel
+    api: https://boards-api.greenhouse.io/v1/boards/vercel/jobs
+    notes: "SF. AI SDK, v0.dev. Frontend AI tooling. 79 open roles."
+    enabled: true
+
+  - name: Zapier
+    careers_url: https://jobs.ashbyhq.com/zapier
+    notes: "Remote-first US. Automation platform. Strong AI integration team."
+    enabled: true
+
+  - name: WorkOS
+    careers_url: https://jobs.ashbyhq.com/workos
+    notes: "SF. Enterprise auth + developer tools. US-first."
+    enabled: true
+
+  - name: Clay Labs
+    careers_url: https://jobs.ashbyhq.com/claylabs
+    notes: "NYC. AI-native GTM and workflow automation."
+    enabled: true
+
+  - name: Runway
+    careers_url: https://job-boards.greenhouse.io/runwayml
+    scan_method: websearch
+    scan_query: 'site:runwayml.com/careers OR "runway" "AI Engineer" OR "ML Engineer" site:jobs.ashbyhq.com OR site:job-boards.greenhouse.io'
+    notes: "NYC. Generative AI video. Greenhouse board — verify slug."
+    enabled: true
+
+  # ==========================================================================
+  # INTERNATIONAL COMPANIES WITH ACTIVE US HIRING
+  # (verified to post US-based or US-remote roles)
+  # ==========================================================================
+
+  - name: Stability AI
+    careers_url: https://job-boards.greenhouse.io/stabilityai
+    api: https://boards-api.greenhouse.io/v1/boards/stabilityai/jobs
+    notes: "London + SF. Generative AI image/video. US roles available. 14 open."
+    enabled: true
+
+  - name: Intercom
+    careers_url: https://job-boards.greenhouse.io/intercom
+    api: https://boards-api.greenhouse.io/v1/boards/intercom/jobs
+    notes: "Dublin + SF. Fin AI agent. US engineering roles. 189 open."
+    enabled: true
+
+  - name: Black Forest Labs
+    careers_url: https://job-boards.greenhouse.io/blackforestlabs
+    api: https://boards-api.greenhouse.io/v1/boards/blackforestlabs/jobs
+    notes: "Freiburg DE + SF. FLUX image models. US office hires engineers. 10 open."
+    enabled: true
+
+  - name: Celonis
+    careers_url: https://job-boards.greenhouse.io/celonis
+    api: https://boards-api.greenhouse.io/v1/boards/celonis/jobs
+    notes: "Munich + NYC. Process intelligence + Applied AI. US office. 168 open."
+    enabled: true
+
+  - name: Contentful
+    careers_url: https://job-boards.greenhouse.io/contentful
+    api: https://boards-api.greenhouse.io/v1/boards/contentful/jobs
+    notes: "Berlin + Denver CO. Headless CMS + AI workflows. US office. 115 open."
+    enabled: true
+
+  - name: Pigment
+    careers_url: https://jobs.lever.co/pigment
+    notes: "Paris + NYC. AI-powered FP&A. US NYC office hires engineers."
+    enabled: true
+
+  - name: PolyAI
+    careers_url: https://job-boards.greenhouse.io/polyai
+    api: https://boards-api.greenhouse.io/v1/boards/polyai/jobs
+    notes: "London + NYC. Voice AI for enterprise contact centers. US roles. 25 open."
+    enabled: true
+
+  - name: Talkdesk
+    careers_url: https://careers.talkdesk.com
+    scan_method: websearch
+    scan_query: 'site:careers.talkdesk.com "AI Engineer" OR "ML Engineer" OR "AI"'
+    notes: "Lisbon + SF. Contact center AI. US office hires engineers."
+    enabled: true
+
+  - name: Legora
+    careers_url: https://jobs.ashbyhq.com/legora
+    notes: "Stockholm + NYC. AI-native legal workspace. US office."
+    enabled: true
+
+  - name: Spotify
+    careers_url: https://jobs.lever.co/spotify
+    notes: "Stockholm + NYC. Large ML/personalization org. US roles."
+    enabled: true
+
+  - name: Isomorphic Labs
+    careers_url: https://job-boards.greenhouse.io/isomorphiclabs
+    api: https://boards-api.greenhouse.io/v1/boards/isomorphiclabs/jobs
+    notes: "London + Cambridge MA. DeepMind spin-out. US research roles. 28 open."
+    enabled: true
+
+  - name: Lakera
+    careers_url: https://jobs.ashbyhq.com/lakera.ai
+    notes: "Zurich + SF. AI security + guardrails. US SF office."
+    enabled: true
+
+  - name: Lovable
+    careers_url: https://jobs.ashbyhq.com/lovable
+    notes: "Stockholm. AI app builder. Remote-friendly, US timezone roles."
+    enabled: true
