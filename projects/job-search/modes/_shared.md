@@ -83,7 +83,7 @@ After detecting archetype, read `modes/_profile.md` for the user's specific fram
 7. Be direct and actionable -- no fluff
 8. Native tech English for generated text. Short sentences, action verbs, no passive voice.
 8b. Case study URLs in PDF Professional Summary (recruiter may only read this).
-9. **Tracker additions as TSV** -- NEVER edit applications.md directly. Write TSV in `batch/tracker-additions/`.
+9. **Tracker additions as TSV** -- NEVER edit applications.md directly. Write ONE TSV file per batch (not one file per job) to `batch/tracker-additions/batch-{YYYY-MM-DD}.tsv`. Each line in the file is one job entry (tab-separated, 9 columns). Append to the file if it already exists for today. Format per line: `{num}\t{date}\t{company}\t{role}\tEvaluated\t{X.X}/5\t❌\t[{num}](reports/{filename}.md)\t{one-line summary}`
 10. **Include `**URL:**` in every report header.**
 
 ### Tools

@@ -262,7 +262,7 @@ Default modes are in `modes/` (English). Additional language-specific modes are 
 
 ### TSV Format for Tracker Additions
 
-Write one TSV file per evaluation to `batch/tracker-additions/{num}-{company-slug}.tsv`. Single line, 9 tab-separated columns:
+Write ONE TSV file per batch (not one per job) to `batch/tracker-additions/batch-{YYYY-MM-DD}.tsv`. Each line in the file is one job entry. Append to the file if it already exists for today's date. 9 tab-separated columns per line:
 
 ```
 {num}\t{date}\t{company}\t{role}\t{status}\t{score}/5\t{pdf_emoji}\t[{num}](reports/{num}-{slug}-{date}.md)\t{note}
@@ -280,6 +280,13 @@ Write one TSV file per evaluation to `batch/tracker-additions/{num}-{company-slu
 9. `notes` -- one-line summary
 
 **Note:** In applications.md, score comes BEFORE status. The merge script handles this column swap automatically.
+
+**Example batch file (`batch-2026-04-11.tsv`):**
+```
+21	2026-04-11	Glean	Machine Learning Engineer, AI Agents	Evaluated	4.1/5	❌	[21](reports/021-glean-ml-engineer-2026-04-11.md)	Strong agent systems fit; visa sponsor confirmed.
+22	2026-04-11	Arize AI	AI Engineer, Instrumentation	Evaluated	3.8/5	❌	[22](reports/022-arize-ai-engineer-2026-04-11.md)	LLMOps fit; smaller team, confirm sponsorship.
+23	2026-04-11	ElevenLabs	Forward Deployed Engineer	Evaluated	4.3/5	❌	[23](reports/023-elevenlabs-fde-2026-04-11.md)	Voice AI + FDE archetype match; apply immediately.
+```
 
 ### Pipeline Integrity
 

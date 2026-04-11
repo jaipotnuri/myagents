@@ -230,7 +230,13 @@ const newLines = [];
 
 for (const file of tsvFiles) {
   const content = readFileSync(join(ADDITIONS_DIR, file), 'utf-8').trim();
-  const addition = parseTsvContent(content, file);
+
+  // Support both single-entry and multi-line (batch) TSV files.
+  // Split on newlines, skip empty lines and comment lines.
+  const lines = content.split('\n').map(l => l.trim()).filter(l => l && !l.startsWith('#'));
+
+  for (const line of lines) {
+  const addition = parseTsvContent(line, file);
   if (!addition) { skipped++; continue; }
 
   // Check for duplicate by:
@@ -287,6 +293,7 @@ for (const file of tsvFiles) {
     added++;
     console.log(`➕ Add #${entryNum}: ${addition.company} — ${addition.role} (${addition.score})`);
   }
+  } // end inner for (line of lines)
 }
 
 // Insert new lines after the header (line index of first data row)

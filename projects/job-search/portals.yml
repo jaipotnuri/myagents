@@ -170,8 +170,10 @@ tracked_companies:
     enabled: true
 
   - name: Modal
-    careers_url: https://jobs.ashbyhq.com/modal-labs
-    notes: "NYC. Serverless ML compute. Python-native GPU infra."
+    careers_url: https://modal.com/careers
+    scan_method: websearch
+    scan_query: 'site:modal.com/careers "engineer" OR "AI" OR "ML"'
+    notes: "NYC. Serverless ML compute. Ashby board dead (404 2026-04-10). Updated to modal.com/careers."
     enabled: true
 
   - name: Together AI
@@ -196,8 +198,10 @@ tracked_companies:
     enabled: true
 
   - name: Replicate
-    careers_url: https://jobs.ashbyhq.com/replicate
-    notes: "SF. Run ML models in the cloud via API. Popular with developers."
+    careers_url: https://replicate.com/careers
+    scan_method: websearch
+    scan_query: 'site:replicate.com/careers "engineer" OR "AI" OR "ML"'
+    notes: "SF. Run ML models in the cloud. Ashby board dead (404 2026-04-10). Updated to replicate.com/careers."
     enabled: true
 
   - name: Lambda Labs
@@ -295,12 +299,14 @@ tracked_companies:
 
   - name: Adept
     careers_url: https://jobs.ashbyhq.com/adept
-    notes: "SF. Agentic AI — agents that use computers. Research + eng roles."
-    enabled: true
+    notes: "SF. Acquired by Salesforce Jun 2024. Ashby board dead (404 2026-04-10). Likely no independent hiring."
+    enabled: false
 
   - name: Cognition (Devin)
-    careers_url: https://jobs.ashbyhq.com/cognition-labs
-    notes: "SF. Devin AI software engineer. Agentic coding."
+    careers_url: https://cognition.ai/careers
+    scan_method: websearch
+    scan_query: '"cognition" OR "devin ai" careers "engineer" site:jobs.ashbyhq.com OR site:job-boards.greenhouse.io OR cognition.ai'
+    notes: "SF. Devin AI software engineer. Ashby board dead (404 2026-04-10). Try cognition.ai/careers."
     enabled: true
 
   - name: Harvey
@@ -309,8 +315,10 @@ tracked_companies:
     enabled: true
 
   - name: Cursor
-    careers_url: https://jobs.ashbyhq.com/anysphere
-    notes: "SF. AI code editor (Anysphere). Strong ML + infra team."
+    careers_url: https://cursor.com/careers
+    scan_method: websearch
+    scan_query: '"cursor" OR "anysphere" careers "engineer" OR "AI" site:jobs.ashbyhq.com OR cursor.com'
+    notes: "SF. AI code editor (Anysphere). Ashby board dead (404 2026-04-10). Try cursor.com/careers."
     enabled: true
 
   - name: Lindy
@@ -521,4 +529,47 @@ tracked_companies:
   - name: Lovable
     careers_url: https://jobs.ashbyhq.com/lovable
     notes: "Stockholm. AI app builder. Remote-friendly, US timezone roles."
+    enabled: true
+
+  # ==========================================================================
+  # NEW — Discovered via Level 3 WebSearch 2026-04-10
+  # ==========================================================================
+
+  - name: LlamaIndex
+    careers_url: https://jobs.ashbyhq.com/llamaindex
+    notes: "SF. LlamaIndex data framework for LLM apps. Discovered via Level 3 2026-04-10."
+    enabled: true
+
+  - name: Axiomatic AI
+    careers_url: https://job-boards.greenhouse.io/axiomaticai
+    api: https://boards-api.greenhouse.io/v1/boards/axiomaticai/jobs
+    notes: "AI research + applications. Discovered via Level 3 2026-04-10."
+    enabled: true
+
+  - name: Upstart
+    careers_url: https://job-boards.greenhouse.io/upstart
+    api: https://boards-api.greenhouse.io/v1/boards/upstart/jobs
+    notes: "SF. AI lending + credit platform. Discovered via Level 3 2026-04-10."
+    enabled: true
+
+  - name: Defense Unicorns
+    careers_url: https://job-boards.greenhouse.io/defenseunicorns
+    api: https://boards-api.greenhouse.io/v1/boards/defenseunicorns/jobs
+    notes: "Defense tech + AI. Discovered via Level 3 2026-04-10."
+    enabled: true
+
+  - name: Censys
+    careers_url: https://job-boards.greenhouse.io/censys
+    api: https://boards-api.greenhouse.io/v1/boards/censys/jobs
+    notes: "Security research + AI. Discovered via Level 3 2026-04-10."
+    enabled: true
+
+  - name: Luxury Presence
+    careers_url: https://jobs.lever.co/luxurypresence
+    notes: "AI for luxury real estate. Discovered via Level 3 2026-04-10."
+    enabled: true
+
+  - name: IMO Health
+    careers_url: https://jobs.lever.co/imo-online
+    notes: "Telehealth + clinical AI. Discovered via Level 3 2026-04-10."
     enabled: true

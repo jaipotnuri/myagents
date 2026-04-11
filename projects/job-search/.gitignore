@@ -9,6 +9,14 @@ output/*
 reports/*
 !reports/.gitkeep
 
+# Job search data — personal, never commit
+data/pipeline.md
+data/scan-history.tsv
+data/applications.md
+batch/tracker-additions/batch*.tsv
+batch/tracker-additions/merged/
+jds/
+
 # Environment variables
 .env
 .env.local
