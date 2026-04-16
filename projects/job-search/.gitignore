@@ -9,10 +9,10 @@ output/*
 reports/*
 !reports/.gitkeep
 
-# Job search data — personal, never commit
-data/pipeline.md
-data/scan-history.tsv
-data/applications.md
+# Job search data — tracked in git
+# data/pipeline.md
+# data/scan-history.tsv
+# data/applications.md
 batch/tracker-additions/batch*.tsv
 batch/tracker-additions/merged/
 jds/
