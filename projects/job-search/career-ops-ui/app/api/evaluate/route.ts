@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { readFileSync, existsSync } from "fs";
 import path from "path";
+import { appendLog } from "@/lib/logger";
 
 // ---------------------------------------------------------------------------
 // Directory resolution
@@ -115,6 +116,14 @@ export async function POST(request: NextRequest) {
   // ── No API key → return mock with a flag so the UI can show a note ──────
   if (!process.env.ANTHROPIC_API_KEY) {
     console.warn("[api/evaluate] ANTHROPIC_API_KEY not set — returning mock data");
+    await appendLog({
+      command: "evaluate",
+      args: [mode],
+      exitCode: 0,
+      durationMs: 0,
+      stdout: "ANTHROPIC_API_KEY not set — returned mock data",
+      stderr: "",
+    });
     return NextResponse.json({ ...MOCK_EVALUATION, _mock: true });
   }
 
@@ -128,6 +137,7 @@ export async function POST(request: NextRequest) {
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
   let rawText: string;
+  const evalStart = Date.now();
   try {
     const message = await client.messages.create({
       model: "claude-sonnet-4-5",
@@ -149,6 +159,14 @@ export async function POST(request: NextRequest) {
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     console.error("[api/evaluate] Anthropic API error:", msg);
+    await appendLog({
+      command: "evaluate",
+      args: [mode],
+      exitCode: 1,
+      durationMs: Date.now() - evalStart,
+      stdout: "",
+      stderr: msg,
+    });
     return NextResponse.json(
       { error: `Claude API call failed: ${msg}` },
       { status: 502 }
@@ -172,6 +190,15 @@ export async function POST(request: NextRequest) {
       { status: 502 }
     );
   }
+
+  await appendLog({
+    command: "evaluate",
+    args: [mode],
+    exitCode: 0,
+    durationMs: Date.now() - evalStart,
+    stdout: JSON.stringify(result).slice(0, 500),
+    stderr: "",
+  });
 
   return NextResponse.json(result);
 }

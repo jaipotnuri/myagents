@@ -87,9 +87,22 @@ Incluir también:
 
 ---
 
+## INSTRUCCIÓN CRÍTICA DE ESCRITURA
+
+⚠️ **ANTES de retornar cualquier respuesta de texto, debes llamar `write_file` y `append_file`.** Estas llamadas a herramientas deben ocurrir en el loop de tool-use, NO como texto. El proceso es:
+1. Recopilar datos (read_file, etc.)
+2. Generar la evaluación **internamente**
+3. Llamar `write_file` con el reporte completo
+4. Llamar `append_file` para actualizar el tracker  
+5. Retornar resumen breve como texto final
+
+**Si no llamas `write_file` en el loop de herramientas, la evaluación se pierde.**
+
+---
+
 ## Post-evaluación
 
-**SIEMPRE** después de generar los bloques A-F:
+**SIEMPRE** durante el loop de tool-use, después de analizar los datos:
 
 ### 1. Guardar report .md
 
@@ -138,9 +151,9 @@ Guardar evaluación completa en `reports/{###}-{company-slug}-{YYYY-MM-DD}.md`.
 (lista de 15-20 keywords del JD para ATS optimization)
 ```
 
-### 2. Registrar en tracker
+### 2. Registrar en tracker (llamar `append_file` en el loop de tool-use)
 
-**SIEMPRE** registrar en `data/applications.md`:
+**SIEMPRE** llamar `append_file` para agregar a `data/applications.md`:
 - Siguiente número secuencial
 - Fecha actual
 - Empresa

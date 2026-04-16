@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { RefreshCw, Search } from "lucide-react";
+import { RefreshCw, Search, AlertTriangle, Loader2, CheckCircle2, XCircle } from "lucide-react";
 
 interface Company {
   name: string;
@@ -9,22 +9,24 @@ interface Company {
   openRoles: number;
   lastScanned: string;
   slug: string;
+  url?: string;
+  isLive?: boolean;
+  lastStatus?: string;
 }
 
-const MOCK_COMPANIES: Company[] = [
-  { name: "Anthropic",    tier: 1, openRoles: 3, lastScanned: "2h ago",  slug: "anthropic"   },
-  { name: "OpenAI",       tier: 1, openRoles: 7, lastScanned: "4h ago",  slug: "openai"      },
-  { name: "DeepMind",     tier: 1, openRoles: 2, lastScanned: "1d ago",  slug: "deepmind"    },
-  { name: "Cohere",       tier: 2, openRoles: 4, lastScanned: "6h ago",  slug: "cohere"      },
-  { name: "Mistral AI",   tier: 2, openRoles: 1, lastScanned: "2d ago",  slug: "mistral"     },
-  { name: "Hugging Face", tier: 2, openRoles: 5, lastScanned: "12h ago", slug: "huggingface" },
-  { name: "Groq",         tier: 2, openRoles: 2, lastScanned: "1d ago",  slug: "groq"        },
-  { name: "Together AI",  tier: 3, openRoles: 3, lastScanned: "3d ago",  slug: "together"    },
-  { name: "Perplexity",   tier: 3, openRoles: 1, lastScanned: "2d ago",  slug: "perplexity"  },
-  { name: "Stability AI", tier: 3, openRoles: 2, lastScanned: "5d ago",  slug: "stability"   },
-  { name: "Replicate",    tier: 4, openRoles: 1, lastScanned: "7d ago",  slug: "replicate"   },
-  { name: "LangChain",    tier: 4, openRoles: 2, lastScanned: "6d ago",  slug: "langchain"   },
-];
+interface ScanResult {
+  url: string;
+  live: boolean;
+  status: "active" | "expired" | "uncertain";
+}
+
+interface ScanResponse {
+  started?: boolean;
+  results?: ScanResult[];
+  error?: string;
+  message?: string;
+  urlsChecked?: number;
+}
 
 const TIER_BADGE: Record<number, string> = {
   1: "bg-violet-500/30 text-violet-300",
@@ -33,22 +35,45 @@ const TIER_BADGE: Record<number, string> = {
   4: "bg-slate-700/40 text-slate-500",
 };
 
+type BannerType = "info" | "error" | "warn" | "success";
+
+interface Banner {
+  type: BannerType;
+  msg: string;
+}
+
+const BANNER_STYLES: Record<BannerType, string> = {
+  info: "border-indigo-500/30 bg-indigo-500/10 text-indigo-300",
+  success: "border-green-500/30 bg-green-500/10 text-green-300",
+  warn: "border-yellow-500/30 bg-yellow-500/10 text-yellow-300",
+  error: "border-red-500/30 bg-red-500/10 text-red-400",
+};
+
 export default function ScannerPage() {
   const [companies, setCompanies] = useState<Company[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [scanning, setScanning] = useState(false);
-  const [scanBanner, setScanBanner] = useState<{ type: "info" | "error"; msg: string } | null>(null);
+  const [scanBanner, setScanBanner] = useState<Banner | null>(null);
   const [search, setSearch] = useState("");
   const [tierFilter, setTierFilter] = useState(0);
+  const [scanningRows, setScanningRows] = useState<Set<string>>(new Set());
+  const [rowResults, setRowResults] = useState<Map<string, ScanResult>>(new Map());
 
   const fetchCompanies = async () => {
+    setLoadError(null);
     try {
       const res = await fetch("/api/scanner");
-      if (!res.ok) throw new Error("API error");
       const data = await res.json();
-      setCompanies(data);
-    } catch {
-      setCompanies(MOCK_COMPANIES);
+      if (!res.ok) {
+        setLoadError(data.error ?? `Server error ${res.status}`);
+        setCompanies([]);
+      } else {
+        setCompanies(data as Company[]);
+      }
+    } catch (err) {
+      setLoadError(err instanceof Error ? err.message : "Network error");
+      setCompanies([]);
     } finally {
       setLoading(false);
     }
@@ -60,19 +85,67 @@ export default function ScannerPage() {
 
   const handleScanAll = async () => {
     setScanning(true);
-    setScanBanner(null);
+    setScanBanner({ type: "info", msg: "Scanning portals… this may take up to 2 minutes" });
+
     try {
       const res = await fetch("/api/scanner", { method: "POST" });
-      const data = (await res.json()) as { started?: boolean; error?: string };
+      const data = (await res.json()) as ScanResponse;
+
       if (!res.ok || data.error) {
         setScanBanner({ type: "error", msg: data.error ?? `Server error ${res.status}` });
-      } else {
-        setScanBanner({ type: "info", msg: "Scan started in the background — refresh in a moment to see updated results." });
+        return;
       }
+
+      if (data.message) {
+        setScanBanner({ type: "warn", msg: data.message });
+        return;
+      }
+
+      const results = data.results ?? [];
+      const live = results.filter((r) => r.live).length;
+      const unreachable = results.filter((r) => !r.live).length;
+
+      await fetchCompanies();
+
+      setScanBanner({
+        type: live > 0 ? "success" : "warn",
+        msg: `Scan complete — ${live} live, ${unreachable} unreachable`,
+      });
     } catch (err) {
       setScanBanner({ type: "error", msg: err instanceof Error ? err.message : "Network error" });
     } finally {
       setScanning(false);
+    }
+  };
+
+  const handleScanRow = async (company: Company) => {
+    if (!company.url) return;
+
+    setScanningRows((prev) => new Set(Array.from(prev).concat(company.slug)));
+
+    try {
+      const res = await fetch("/api/scanner", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: company.url }),
+      });
+      const data = (await res.json()) as ScanResponse;
+      const result = data.results?.[0];
+      if (result) {
+        setRowResults((prev) => {
+          const next = new Map(Array.from(prev.entries()));
+          next.set(company.url!, result);
+          return next;
+        });
+      }
+    } catch {
+      // per-row scan failure is silent — the row just stays unchanged
+    } finally {
+      setScanningRows((prev) => {
+        const next = new Set(prev);
+        next.delete(company.slug);
+        return next;
+      });
     }
   };
 
@@ -97,35 +170,60 @@ export default function ScannerPage() {
           disabled={scanning}
           className="flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-indigo-500 disabled:opacity-60"
         >
-          <RefreshCw
-            className={`h-4 w-4 ${scanning ? "animate-spin" : ""}`}
-          />
-          Scan All
+          {scanning ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <RefreshCw className="h-4 w-4" />
+          )}
+          {scanning ? "Scanning…" : "Scan All"}
         </button>
       </div>
+
+      {/* Load error */}
+      {loadError && (
+        <div className="flex items-start gap-3 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400">
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+          <div>
+            <p className="font-semibold">Failed to load companies</p>
+            <p className="mt-0.5 font-mono text-xs">{loadError}</p>
+            <p className="mt-1 text-xs text-red-300/70">
+              Make sure CAREER_OPS_DIR is set in .env.local and portals.yml exists.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Scan banner */}
       {scanBanner && (
         <div
-          className={`flex items-center justify-between rounded-lg border px-4 py-3 text-sm ${
-            scanBanner.type === "error"
-              ? "border-red-500/30 bg-red-500/10 text-red-400"
-              : "border-indigo-500/30 bg-indigo-500/10 text-indigo-300"
-          }`}
+          className={`flex w-full items-center justify-between rounded-lg border px-4 py-3 text-sm ${BANNER_STYLES[scanBanner.type]}`}
         >
-          <span>{scanBanner.msg}</span>
-          <button
-            onClick={() => setScanBanner(null)}
-            className="ml-4 shrink-0 text-xs opacity-60 hover:opacity-100"
-          >
-            ✕
-          </button>
+          <div className="flex items-center gap-2">
+            {scanning && <Loader2 className="h-4 w-4 animate-spin" />}
+            <span>{scanBanner.msg}</span>
+          </div>
+          {!scanning && (
+            <button
+              onClick={() => setScanBanner(null)}
+              className="ml-4 shrink-0 text-xs opacity-60 hover:opacity-100"
+            >
+              &#x2715;
+            </button>
+          )}
         </div>
       )}
 
+      {/* Full-portal scan note */}
+      <div className="rounded-lg border border-slate-700/60 bg-slate-800/30 px-4 py-3 text-xs text-slate-500">
+        <span className="font-semibold text-slate-400">Note:</span> &quot;Scan All&quot; checks
+        liveness of URLs already in your pipeline. To discover new roles across all 70+ portals,
+        run{" "}
+        <code className="rounded bg-slate-700 px-1 py-0.5 font-mono">/career-ops scan</code> in
+        the Claude Code CLI.
+      </div>
+
       {/* Filter bar */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-        {/* Search */}
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
           <input
@@ -137,7 +235,6 @@ export default function ScannerPage() {
           />
         </div>
 
-        {/* Tier pills */}
         <div className="flex gap-2">
           {[0, 1, 2, 3, 4].map((t) => (
             <button
@@ -165,52 +262,101 @@ export default function ScannerPage() {
             />
           ))}
         </div>
-      ) : filtered.length === 0 ? (
+      ) : !loadError && filtered.length === 0 ? (
         <div className="flex h-48 items-center justify-center rounded-xl border border-slate-700/60 bg-slate-800/20 text-slate-500">
           No companies match your filters.
         </div>
-      ) : (
+      ) : !loadError ? (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {filtered.map((company) => (
-            <CompanyCard key={company.slug} company={company} />
+            <CompanyCard
+              key={company.slug}
+              company={company}
+              isScanning={scanningRows.has(company.slug)}
+              rowResult={company.url ? rowResults.get(company.url) : undefined}
+              onScan={handleScanRow}
+            />
           ))}
         </div>
-      )}
+      ) : null}
     </div>
   );
 }
 
-function CompanyCard({ company }: { company: Company }) {
+interface CompanyCardProps {
+  company: Company;
+  isScanning: boolean;
+  rowResult?: ScanResult;
+  onScan: (company: Company) => void;
+}
+
+function CompanyCard({ company, isScanning, rowResult, onScan }: CompanyCardProps) {
   const badgeClass = TIER_BADGE[company.tier] ?? TIER_BADGE[4];
+
+  // Determine effective liveness: prefer fresh row-level result, fall back to history
+  const effectiveLive = rowResult ? rowResult.live : company.isLive;
+  const showLiveness = rowResult !== undefined || company.isLive !== undefined;
+
+  // Format date string (ISO → short date if applicable)
+  const displayDate = (() => {
+    if (!company.lastScanned || company.lastScanned === "never") return "never";
+    const d = new Date(company.lastScanned);
+    if (!isNaN(d.getTime())) return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+    return company.lastScanned;
+  })();
 
   return (
     <div className="group relative flex flex-col gap-3 rounded-xl border border-slate-700/60 bg-slate-800/40 p-4 transition hover:border-indigo-500/50 hover:bg-slate-800/60">
-      {/* Top row: avatar + tier badge */}
       <div className="flex items-center justify-between">
-        {/* Letter avatar */}
-        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-700 text-sm font-bold text-slate-300 transition group-hover:bg-indigo-500/20 group-hover:text-indigo-300">
-          {company.name.charAt(0)}
+        <div className="flex items-center gap-2">
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-700 text-sm font-bold text-slate-300 transition group-hover:bg-indigo-500/20 group-hover:text-indigo-300">
+            {company.name.charAt(0)}
+          </div>
+          {showLiveness && (
+            <span className="flex items-center">
+              {effectiveLive ? (
+                <CheckCircle2 className="h-3.5 w-3.5 text-green-400" />
+              ) : (
+                <XCircle className="h-3.5 w-3.5 text-red-400/70" />
+              )}
+            </span>
+          )}
         </div>
-
-        {/* Tier badge */}
-        <span
-          className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${badgeClass}`}
-        >
+        <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${badgeClass}`}>
           T{company.tier}
         </span>
       </div>
 
-      {/* Company name */}
       <p className="font-semibold text-slate-200">{company.name}</p>
 
-      {/* Bottom row: open roles + last scanned */}
       <div className="flex items-center justify-between text-xs">
         <span className="text-slate-300">
           <span className="font-medium">{company.openRoles}</span> open role
           {company.openRoles !== 1 ? "s" : ""}
         </span>
-        <span className="text-slate-500">{company.lastScanned}</span>
+        <span className="text-slate-500">{displayDate}</span>
       </div>
+
+      {/* Per-row scan button */}
+      {company.url && (
+        <button
+          onClick={() => onScan(company)}
+          disabled={isScanning}
+          className="mt-1 flex w-full items-center justify-center gap-1.5 rounded-md border border-slate-700 bg-slate-700/40 py-1.5 text-xs font-medium text-slate-400 transition hover:border-indigo-500/50 hover:bg-slate-700 hover:text-slate-200 disabled:opacity-50"
+        >
+          {isScanning ? (
+            <>
+              <Loader2 className="h-3 w-3 animate-spin" />
+              Scanning…
+            </>
+          ) : (
+            <>
+              <Search className="h-3 w-3" />
+              Scan
+            </>
+          )}
+        </button>
+      )}
     </div>
   );
 }

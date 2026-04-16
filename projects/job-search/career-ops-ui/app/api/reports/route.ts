@@ -94,58 +94,6 @@ function parseMeta(content: string, filename: string): Omit<ReportMeta, "id" | "
 }
 
 // ---------------------------------------------------------------------------
-// Mock data (returned when reports directory is empty or missing)
-// ---------------------------------------------------------------------------
-
-const MOCK_REPORTS: ReportMeta[] = [
-  {
-    id: "groq-ai-infra",
-    filename: "groq-ai-infra.md",
-    company: "Groq",
-    role: "AI Infra Engineer",
-    score: 4.6,
-    date: "Mar 25",
-    filePath: "",
-  },
-  {
-    id: "anthropic-staff",
-    filename: "anthropic-staff.md",
-    company: "Anthropic",
-    role: "Staff AI Engineer",
-    score: 4.8,
-    date: "Apr 1",
-    filePath: "",
-  },
-  {
-    id: "openai-research",
-    filename: "openai-research.md",
-    company: "OpenAI",
-    role: "Research Engineer",
-    score: 4.5,
-    date: "Apr 3",
-    filePath: "",
-  },
-  {
-    id: "cohere-ml",
-    filename: "cohere-ml.md",
-    company: "Cohere",
-    role: "ML Platform Engineer",
-    score: 4.1,
-    date: "Apr 5",
-    filePath: "",
-  },
-  {
-    id: "mistral-senior",
-    filename: "mistral-senior.md",
-    company: "Mistral AI",
-    role: "Sr Software Engineer",
-    score: 3.8,
-    date: "Apr 6",
-    filePath: "",
-  },
-];
-
-// ---------------------------------------------------------------------------
 // Route handlers
 // ---------------------------------------------------------------------------
 
@@ -179,14 +127,6 @@ export async function GET(request: Request) {
       const content = await fs.readFile(filePath, "utf-8");
       return NextResponse.json({ id: safe, content });
     } catch {
-      // Fall through to mock content if file is missing
-      const mock = MOCK_REPORTS.find((r) => r.id === safe);
-      if (mock) {
-        return NextResponse.json({
-          id: safe,
-          content: `## Summary\n${mock.company} — ${mock.role}\n\nFit Score: ${mock.score}/5\n\n*This is mock content. Place real .md files in the reports/ directory.*`,
-        });
-      }
       return NextResponse.json({ error: "Report not found" }, { status: 404 });
     }
   }
@@ -199,7 +139,7 @@ export async function GET(request: Request) {
     const mdFiles = entries.filter((f) => f.endsWith(".md"));
 
     if (mdFiles.length === 0) {
-      return NextResponse.json(MOCK_REPORTS);
+      return NextResponse.json([]);
     }
 
     const reports: ReportMeta[] = await Promise.all(
@@ -246,13 +186,12 @@ export async function GET(request: Request) {
 
     return NextResponse.json(reports);
   } catch (err: unknown) {
-    // Reports directory doesn't exist — return mock data gracefully
     if (
       err instanceof Error &&
       (err as NodeJS.ErrnoException).code === "ENOENT"
     ) {
       console.warn("[api/reports] reports/ directory not found at:", reportsDir);
-      return NextResponse.json(MOCK_REPORTS);
+      return NextResponse.json([]);
     }
 
     const message = err instanceof Error ? err.message : "Failed to read reports directory";

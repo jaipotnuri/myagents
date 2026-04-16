@@ -20,6 +20,8 @@ A Next.js dashboard for the [career-ops](https://github.com/santifer/career-ops)
 | Icons | Lucide React |
 | AI | `@anthropic-ai/sdk` → `claude-sonnet-4-5` |
 | Runtime | Node.js (spawns `.mjs` scripts via `child_process`) |
+| Browser automation | Playwright (headless Chromium) — job posting scraper |
+| Run logging | Append-only JSONL file (`logs/runs.jsonl`) |
 
 ---
 
@@ -84,11 +86,13 @@ npm run dev
 | Dashboard | `/` | `app/(dashboard)/page.tsx` | `GET /api/tracker` | `data/applications.md` |
 | Tracker | `/tracker` | `app/(dashboard)/tracker/page.tsx` | `GET /api/tracker` | `data/applications.md` |
 | Evaluator | `/evaluator` | `app/(dashboard)/evaluator/page.tsx` | `POST /api/evaluate`, `POST /api/tracker` | `modes/*.md`, `data/applications.md` |
-| Pipeline | `/pipeline` | `app/(dashboard)/pipeline/page.tsx` | `GET /api/pipeline`, `POST /api/pipeline` | `data/pipeline.md` |
-| Scanner | `/scanner` | `app/(dashboard)/scanner/page.tsx` | `GET /api/scanner`, `POST /api/scanner` | `portals.yml` |
+| Pipeline | `/pipeline` | `app/(dashboard)/pipeline/page.tsx` | `GET /api/pipeline`, `POST /api/pipeline`, `POST /api/pipeline/scrape` | `data/pipeline.md` |
+| Scanner | `/scanner` | `app/(dashboard)/scanner/page.tsx` | `GET /api/scanner`, `POST /api/scanner` | `portals.yml`, `data/scan-history.tsv` |
 | Reports | `/reports` | `app/(dashboard)/reports/page.tsx` | `GET /api/reports`, `GET /api/reports?id=` | `reports/*.md` |
 | Patterns | `/patterns` | `app/(dashboard)/patterns/page.tsx` | `GET /api/patterns` | `analyze-patterns.mjs` → `data/applications.md` |
 | Profile | `/profile` | `app/(dashboard)/profile/page.tsx` | `GET /api/profile`, `PUT /api/profile` | `config/profile.yml`, `cv.md` |
+| Scripts | `/scripts` | `app/(dashboard)/scripts/page.tsx` | `POST /api/scripts` | `*.mjs` scripts |
+| Logs | `/logs` | `app/(dashboard)/logs/page.tsx` | `GET /api/logs` | `logs/runs.jsonl` |
 
 ---
 
@@ -103,7 +107,9 @@ npm run dev
 | Pipeline | **Evaluate** (zap icon) | `evaluateItem()` | — | — | optimistic status toggle |
 | Pipeline | **Skip** (skip icon) | `skipItem()` | — | — | optimistic status toggle |
 | Pipeline | **Run Batch** | — | — | — | UI button (not wired to backend yet) |
-| Scanner | **Scan All** | `handleScanAll()` | `POST /api/scanner` | `check-liveness.mjs` (fire-and-forget) | reads `portals.yml` |
+| Scanner | **Scan All** | `handleScanAll()` | `POST /api/scanner` | `check-liveness.mjs` (runs synchronously, awaited) | reads `data/pipeline.md` pending URLs |
+| Pipeline | **Scrape** (globe icon) | `scrapeItem()` | `POST /api/pipeline/scrape` | Playwright headless Chromium | reads job posting URL → returns title, company, description |
+| Scripts | **Run** (per script card) | `run()` | `POST /api/scripts` | named `.mjs` script | varies by script |
 | Patterns | **Run Analysis** | `handleRunAnalysis()` | `GET /api/patterns` | `analyze-patterns.mjs --json` | reads `data/applications.md` |
 | Profile | **Edit** | `handleEdit()` | — | — | toggles edit mode |
 | Profile | **Save** | `handleSave()` | `PUT /api/profile` | — | writes `config/profile.yml` |
@@ -246,7 +252,7 @@ graph LR
   style AP fill:#1e293b,color:#94a3b8
 ```
 
-**Other `.mjs` scripts** — invoked only from the CLI, not the UI:
+**Other `.mjs` scripts** — now also runnable from the Scripts screen or the CLI:
 
 | Script | Purpose | How to run |
 |---|---|---|
@@ -276,27 +282,36 @@ career-ops-ui/
 │   │   ├── scanner/page.tsx      # /scanner → Company card grid
 │   │   ├── reports/page.tsx      # /reports → Two-panel report browser
 │   │   ├── patterns/page.tsx     # /patterns → Rejection + archetype + gap charts
-│   │   └── profile/page.tsx      # /profile → CV viewer + profile.yml editor
+│   │   ├── profile/page.tsx      # /profile → CV viewer + profile.yml editor
+│   │   ├── scripts/page.tsx      # /scripts → Run maintenance scripts from UI
+│   │   └── logs/page.tsx         # /logs → Browse run log history
 │   ├── api/
 │   │   ├── tracker/route.ts      # GET: parse applications.md → JSON array
 │   │   │                         # POST: append new row to applications.md
 │   │   ├── evaluate/route.ts     # POST: load mode file, call Anthropic API
 │   │   ├── pipeline/route.ts     # GET: parse pipeline.md URLs
 │   │   │                         # POST: append URL to pipeline.md
-│   │   ├── scanner/route.ts      # GET: parse portals.yml → company list
-│   │   │                         # POST: fire-and-forget check-liveness.mjs
+│   │   ├── pipeline/scrape/route.ts  # POST: Playwright scrape → title, company, desc
+│   │   ├── scanner/route.ts      # GET: parse portals.yml + scan-history.tsv
+│   │   │                         # POST: run check-liveness.mjs on pending URLs
 │   │   ├── reports/route.ts      # GET: list reports/*.md metadata
 │   │   │                         # GET?id=: read specific report content
-│   │   ├── patterns/route.ts     # GET: run analyze-patterns.mjs --json
-│   │   └── profile/route.ts      # GET: read profile.yml + cv.md
-│   │                             # PUT: write profile.yml
+│   │   ├── patterns/route.ts     # GET: run analyze-patterns.mjs --summary
+│   │   ├── profile/route.ts      # GET: read profile.yml + cv.md
+│   │   │                         # PUT: write profile.yml
+│   │   ├── scripts/route.ts      # POST: run named .mjs maintenance scripts
+│   │   └── logs/route.ts         # GET: return last 50 entries from logs/runs.jsonl
 │   └── globals.css               # Tailwind base + custom CSS
 ├── components/
-│   ├── Sidebar.tsx               # 224px navigation rail (8 nav items)
+│   ├── Sidebar.tsx               # 224px navigation rail (10 nav items)
 │   └── ScoreBadge.tsx            # Coloured score pill (green/blue/yellow/red)
 ├── lib/
 │   ├── runScript.ts              # spawn() wrapper for .mjs scripts
-│   └── parseTracker.ts           # Parses applications.md table → Application[]
+│   ├── parseTracker.ts           # Parses applications.md table → Application[]
+│   ├── playwright.ts             # Playwright scraper: scrapeJobPosting(url)
+│   └── logger.ts                 # Append-only JSONL run logger
+├── logs/
+│   └── runs.jsonl                # Script run history (gitignored)
 ├── types/
 │   └── career-ops.ts             # Shared TypeScript types (Application, etc.)
 ├── public/                       # Static assets
@@ -354,21 +369,26 @@ Restart the dev server after editing `.env.local`. All API routes fall back grac
 
 `ANTHROPIC_API_KEY` is not set in `.env.local`. Add it and restart the server. The key is read server-side only and never exposed to the browser.
 
-**Scan All button spins but nothing changes**
+**Scan All button returns "No pending URLs"**
 
-The `POST /api/scanner` route spawns `check-liveness.mjs` as a fire-and-forget background process. Possible causes:
+`POST /api/scanner` runs `check-liveness.mjs` on the URLs currently in `data/pipeline.md` that have pending status (`- [ ] https://...`). If pipeline.md is empty or has no pending items, the scan is a no-op. Add job URLs to the Pipeline screen first.
+
+Note: Full portal discovery (scanning 70+ companies for new roles) requires the Claude Code CLI: `/career-ops scan`. The UI scanner only validates liveness of URLs already in your pipeline.
+
+**Scan All button returns an error**
+
+- `CAREER_OPS_DIR` is not set or wrong — check `.env.local`.
 - `node` is not in the `PATH` seen by Next.js — verify with `which node` in the same shell.
-- `CAREER_OPS_DIR` is wrong so the script path can't be resolved.
-- The script itself errors — check the Next.js server console for `[scanner POST] Background scan error:` messages.
+- `playwright` is not installed — run `npx playwright install chromium` from the `career-ops-ui/` directory.
+- Check the **Logs** screen (`/logs`) for the detailed error output.
 
-After a scan completes, **refresh the Scanner page** — the server returns the banner "Scan started in the background — refresh in a moment to see updated results."
+**Patterns screen shows an error banner instead of charts**
 
-**Run Analysis shows no data / keeps showing mock data**
-
-`analyze-patterns.mjs` must exit 0 and print valid JSON to stdout. Check:
+`analyze-patterns.mjs` must exit 0. Check:
 - `CAREER_OPS_DIR` is set correctly.
-- `data/applications.md` has enough rows for the script to analyse.
-- Run `node analyze-patterns.mjs --json` directly from the `job-search/` directory to see raw output or error messages.
+- `data/applications.md` has at least 5 applications with statuses beyond "Evaluated" (Applied, Responded, Interview, Offer, Rejected).
+- Run `node analyze-patterns.mjs --summary` directly from the `job-search/` directory to see raw output.
+- Check the **Logs** screen (`/logs`) for the exact stderr output.
 
 **next.config error on startup**
 
@@ -388,3 +408,38 @@ The `data/applications.md` file must contain a markdown table with the header ro
 | # | Date | Company | Role | Score | Status | PDF | Report | Notes |
 ```
 Any other format is not parsed. Check that the file matches the expected schema shown in `lib/parseTracker.ts`.
+
+---
+
+## 13. Run Logging
+
+Every script execution and Anthropic API call is logged to `logs/runs.jsonl` (append-only JSONL). Each entry:
+
+```json
+{
+  "timestamp": "2026-04-13T10:00:00.000Z",
+  "command": "analyze-patterns",
+  "args": ["--summary"],
+  "exitCode": 0,
+  "durationMs": 1234,
+  "stdout": "…first 500 chars…",
+  "stderr": ""
+}
+```
+
+Browse the last 50 entries in the **Logs** screen (`/logs`). The log file is local and gitignored.
+
+---
+
+## 14. Browser Automation — Playwright vs Chrome MCP
+
+The UI uses **Playwright (headless Chromium)** for the Pipeline "Scrape" button. This launches a sandboxed browser in the background with no visible window.
+
+| Feature | Playwright (UI scraper) | Chrome MCP (CLI scan) |
+|---|---|---|
+| Trigger | Pipeline "Scrape" button → `POST /api/pipeline/scrape` | `/career-ops scan` in Claude Code CLI |
+| Session/cookies | Fresh session (no login) | Uses your active Chrome session |
+| Best for | Extracting JD text from public pages | Scanning portals that require login |
+| Works with | Greenhouse, Lever, Ashby, most static pages | LinkedIn, Workday, internal ATSes |
+
+The full portal scan (`/career-ops scan`) always uses the Chrome MCP because it needs authenticated sessions. Playwright in the UI is only used to pre-fill job metadata for easier evaluation.

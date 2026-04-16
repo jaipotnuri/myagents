@@ -1,6 +1,21 @@
 import { spawn } from "child_process";
 import path from "path";
 
+export type ScriptName =
+  | "analyze-patterns"
+  | "check-liveness"
+  | "cv-sync-check"
+  | "dedup-tracker"
+  | "doctor"
+  | "generate-pdf"
+  | "merge-tracker"
+  | "normalize-statuses"
+  | "verify-pipeline"
+  | "merge"
+  | "verify"
+  | "pdf"
+  | "evaluate";
+
 const CAREER_OPS_DIR =
   process.env.CAREER_OPS_DIR ?? path.join(process.cwd(), "..", "..");
 
@@ -22,6 +37,13 @@ export function runScript(
   options?: { timeout?: number }
 ): Promise<{ stdout: string; stderr: string; exitCode: number }> {
   return new Promise((resolve, reject) => {
+    if (!process.env.CAREER_OPS_DIR) {
+      console.error(
+        "[runScript] CAREER_OPS_DIR is not set — falling back to relative path. " +
+          "Set CAREER_OPS_DIR in .env.local to point to your career-ops directory."
+      );
+    }
+
     const scriptPath = path.join(CAREER_OPS_DIR, `${scriptName}.mjs`);
 
     const child = spawn("node", [scriptPath, ...args], {

@@ -44,32 +44,8 @@ interface PatternsData {
 }
 
 // ---------------------------------------------------------------------------
-// Mock fallback data
+// No mock data — patterns come from real analyze-patterns.mjs output
 // ---------------------------------------------------------------------------
-
-const MOCK_DATA: PatternsData = {
-  rejectReasons: [
-    { reason: "Geo restriction", count: 4 },
-    { reason: "Stack mismatch",  count: 3 },
-    { reason: "Level mismatch",  count: 2 },
-    { reason: "Visa concerns",   count: 2 },
-    { reason: "Score < 3.5",     count: 1 },
-  ],
-  archetypes: [
-    { type: "AI Infra",  apps: 4, converts: 2 },
-    { type: "ML Eng",    apps: 5, converts: 1 },
-    { type: "Fullstack", apps: 3, converts: 0 },
-    { type: "DevRel",    apps: 2, converts: 1 },
-  ],
-  techGaps: [
-    { skill: "PyTorch",    gap: 0.1 }, { skill: "RLHF",       gap: 0.7 },
-    { skill: "Kubernetes", gap: 0.3 }, { skill: "Rust",        gap: 0.9 },
-    { skill: "Ray",        gap: 0.5 }, { skill: "CUDA",        gap: 0.6 },
-    { skill: "TypeScript", gap: 0.2 }, { skill: "Go",          gap: 0.4 },
-    { skill: "vLLM",       gap: 0.6 }, { skill: "Triton",      gap: 0.8 },
-    { skill: "Megatron",   gap: 0.9 }, { skill: "Flash Attn",  gap: 0.7 },
-  ],
-};
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -117,21 +93,27 @@ function ArchetypeBar({ archetype }: { archetype: Archetype }) {
 // ---------------------------------------------------------------------------
 
 export default function PatternsPage() {
-  const [data, setData]       = useState<PatternsData>(MOCK_DATA);
+  const [data, setData]       = useState<PatternsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [running, setRunning] = useState(false);
+  const [error, setError]     = useState<string | null>(null);
 
   async function fetchPatterns() {
+    setError(null);
     try {
       const res = await fetch("/api/patterns");
-      if (!res.ok) throw new Error("API error");
       const json = await res.json();
-      // Validate shape; fall back to mock if keys missing
-      if (json.rejectReasons && json.archetypes && json.techGaps) {
+      if (!res.ok) {
+        setError(json.error ?? `Server error ${res.status}`);
+      } else if (json.rejectReasons && json.archetypes && json.techGaps) {
         setData(json as PatternsData);
+      } else if (json.error) {
+        setError(json.error);
+      } else {
+        setError("analyze-patterns.mjs returned unexpected output. Run it with --summary to check.");
       }
-    } catch {
-      // silently keep mock data
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Network error");
     } finally {
       setLoading(false);
       setRunning(false);
@@ -169,18 +151,31 @@ export default function PatternsPage() {
         </button>
       </div>
 
+      {/* Error state */}
+      {error && (
+        <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400">
+          <p className="font-semibold">Analysis failed</p>
+          <p className="mt-1 font-mono text-xs">{error}</p>
+          <p className="mt-2 text-xs text-red-300/70">
+            Make sure you have at least 5 applications in applications.md with statuses beyond &quot;Evaluated&quot;.
+          </p>
+        </div>
+      )}
+
       {/* ------------------------------------------------------------------ */}
       {/* Score threshold callout                                              */}
       {/* ------------------------------------------------------------------ */}
+      {data && (
       <div className="flex items-start gap-3 rounded-xl border border-yellow-500/40 bg-yellow-500/10 px-5 py-4">
-        <span className="mt-0.5 text-base">⚡</span>
+        <span className="mt-0.5 text-base">&#x26A1;</span>
         <p className="text-sm text-yellow-200">
           <span className="font-semibold">Score threshold recommendation:</span>{" "}
           Focus on roles scoring{" "}
           <span className="font-semibold text-yellow-100">4.2+</span> — conversion
-          rate drops 62% below this threshold.
+          rate drops significantly below this threshold.
         </p>
       </div>
+      )}
 
       {/* ------------------------------------------------------------------ */}
       {/* 2-column: rejection reasons + archetype conversion                  */}
@@ -191,7 +186,7 @@ export default function PatternsPage() {
             <div key={i} className="h-64 animate-pulse rounded-xl bg-slate-800/60" />
           ))}
         </div>
-      ) : (
+      ) : data ? (
         <div className="grid gap-6 md:grid-cols-2">
           {/* Left — Rejection Reasons */}
           <div className="rounded-xl border border-slate-700 bg-slate-800/60 p-5">
@@ -252,11 +247,12 @@ export default function PatternsPage() {
             </div>
           </div>
         </div>
-      )}
+      ) : null}
 
       {/* ------------------------------------------------------------------ */}
       {/* Tech Stack Gap Heatmap                                               */}
       {/* ------------------------------------------------------------------ */}
+      {data && (
       <div className="rounded-xl border border-slate-700 bg-slate-800/60 p-5">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-400">
@@ -302,6 +298,7 @@ export default function PatternsPage() {
           </div>
         )}
       </div>
+      )}
     </div>
   );
 }

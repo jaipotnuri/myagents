@@ -1,6 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  /* config options here */
+  serverExternalPackages: ['playwright', 'playwright-core'],
+  experimental: {
+    serverComponentsExternalPackages: ['playwright', 'playwright-core'],
+  },
 }
 
 export default nextConfig

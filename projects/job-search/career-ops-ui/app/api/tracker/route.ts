@@ -80,7 +80,7 @@ export async function POST(request: Request) {
     }
 
     // Determine next row number
-    const rowNums = [...raw.matchAll(/^\|\s*(\d+)\s*\|/gm)].map((m) =>
+    const rowNums = Array.from(raw.matchAll(/^\|\s*(\d+)\s*\|/gm)).map((m) =>
       parseInt(m[1], 10)
     );
     const nextNum = rowNums.length > 0 ? Math.max(...rowNums) + 1 : 1;

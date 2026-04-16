@@ -1,84 +1,110 @@
 import { NextResponse } from "next/server";
 import { runScript } from "@/lib/runScript";
-
-// ---------------------------------------------------------------------------
-// Mock fallback — mirrors the data used by the patterns page
-// ---------------------------------------------------------------------------
-
-const MOCK_PATTERNS = {
-  rejectReasons: [
-    { reason: "Geo restriction", count: 4 },
-    { reason: "Stack mismatch",  count: 3 },
-    { reason: "Level mismatch",  count: 2 },
-    { reason: "Visa concerns",   count: 2 },
-    { reason: "Score < 3.5",     count: 1 },
-  ],
-  archetypes: [
-    { type: "AI Infra",  apps: 4, converts: 2 },
-    { type: "ML Eng",    apps: 5, converts: 1 },
-    { type: "Fullstack", apps: 3, converts: 0 },
-    { type: "DevRel",    apps: 2, converts: 1 },
-  ],
-  techGaps: [
-    { skill: "PyTorch",    gap: 0.1 }, { skill: "RLHF",       gap: 0.7 },
-    { skill: "Kubernetes", gap: 0.3 }, { skill: "Rust",        gap: 0.9 },
-    { skill: "Ray",        gap: 0.5 }, { skill: "CUDA",        gap: 0.6 },
-    { skill: "TypeScript", gap: 0.2 }, { skill: "Go",          gap: 0.4 },
-    { skill: "vLLM",       gap: 0.6 }, { skill: "Triton",      gap: 0.8 },
-    { skill: "Megatron",   gap: 0.9 }, { skill: "Flash Attn",  gap: 0.7 },
-  ],
-};
-
-// ---------------------------------------------------------------------------
-// GET /api/patterns
-// ---------------------------------------------------------------------------
+import { appendLog } from "@/lib/logger";
 
 export async function GET() {
-  try {
-    const { stdout, stderr, exitCode } = await runScript(
-      "analyze-patterns",
-      ["--json"],
-      { timeout: 60_000 }
+  if (!process.env.CAREER_OPS_DIR) {
+    console.error(
+      "[api/patterns] CAREER_OPS_DIR is not set. Set it in .env.local to point to your career-ops directory."
     );
-
-    if (exitCode !== 0) {
-      console.warn(
-        "[api/patterns] analyze-patterns.mjs exited with code",
-        exitCode,
-        "stderr:",
-        stderr.slice(0, 300)
-      );
-      return NextResponse.json(MOCK_PATTERNS);
-    }
-
-    let parsed: unknown;
-    try {
-      parsed = JSON.parse(stdout.trim());
-    } catch {
-      console.warn("[api/patterns] Failed to parse JSON from script output — using mock data");
-      return NextResponse.json(MOCK_PATTERNS);
-    }
-
-    // Validate the expected shape before returning
-    if (
-      parsed &&
-      typeof parsed === "object" &&
-      "rejectReasons" in parsed &&
-      "archetypes" in parsed &&
-      "techGaps" in parsed
-    ) {
-      return NextResponse.json(parsed);
-    }
-
-    // Script returned JSON but not the expected shape — fall through to mock
-    console.warn("[api/patterns] Unexpected JSON shape from script — using mock data");
-  } catch (err) {
-    // Script not found or failed — serve mock so the UI always works
-    console.warn(
-      "[api/patterns] analyze-patterns.mjs unavailable, serving mock data:",
-      err instanceof Error ? err.message : err
+    return NextResponse.json(
+      {
+        error: "CAREER_OPS_DIR is not configured",
+        hint: "Set CAREER_OPS_DIR in .env.local to point to your career-ops directory",
+      },
+      { status: 500 }
     );
   }
 
-  return NextResponse.json(MOCK_PATTERNS);
+  const start = Date.now();
+  let stdout = "";
+  let stderr = "";
+  let exitCode = 0;
+
+  try {
+    ({ stdout, stderr, exitCode } = await runScript(
+      "analyze-patterns",
+      ["--summary"],
+      { timeout: 60_000 }
+    ));
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Script execution failed";
+    console.error("[api/patterns] analyze-patterns.mjs failed:", message);
+    await appendLog({
+      command: "analyze-patterns",
+      args: ["--summary"],
+      exitCode: -1,
+      durationMs: Date.now() - start,
+      stdout: "",
+      stderr: message,
+    });
+    return NextResponse.json(
+      { error: `analyze-patterns.mjs failed: ${message}` },
+      { status: 500 }
+    );
+  }
+
+  await appendLog({
+    command: "analyze-patterns",
+    args: ["--summary"],
+    exitCode,
+    durationMs: Date.now() - start,
+    stdout,
+    stderr,
+  });
+
+  if (exitCode !== 0) {
+    const combinedOutput = (stdout + stderr).toLowerCase();
+    const isEmptyData =
+      combinedOutput.includes("no applications") ||
+      stdout.trim() === "";
+
+    if (isEmptyData) {
+      return NextResponse.json({
+        applications: [],
+        patterns: {},
+        summary:
+          "No applications tracked yet. Add applications to the tracker to see patterns.",
+        _empty: true,
+      });
+    }
+
+    return NextResponse.json(
+      {
+        error: `analyze-patterns.mjs exited with code ${exitCode}`,
+        stderr: stderr.slice(0, 1000),
+        stdout: stdout.slice(0, 500),
+      },
+      { status: 500 }
+    );
+  }
+
+  // Try to parse JSON from stdout
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(stdout.trim());
+  } catch {
+    // Script ran successfully but output is not JSON (e.g. --summary mode outputs text)
+    return NextResponse.json({ output: stdout, stderr });
+  }
+
+  if (
+    parsed &&
+    typeof parsed === "object" &&
+    "rejectReasons" in parsed &&
+    "archetypes" in parsed &&
+    "techGaps" in parsed
+  ) {
+    return NextResponse.json(parsed);
+  }
+
+  // Unexpected JSON shape
+  return NextResponse.json({ data: parsed, stdout });
+}
+
+export async function POST() {
+  return NextResponse.json(
+    { error: "Method Not Allowed", message: "POST is not supported on /api/patterns. Use GET." },
+    { status: 405, headers: { Allow: "GET" } }
+  );
 }

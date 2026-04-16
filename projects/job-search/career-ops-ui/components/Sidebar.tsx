@@ -11,6 +11,9 @@ import {
   FileText,
   BarChart2,
   User,
+  ScrollText,
+  Terminal,
+  Bot,
 } from "lucide-react";
 
 interface NavItem {
@@ -28,6 +31,9 @@ const NAV_ITEMS: NavItem[] = [
   { label: "Reports",   href: "/reports",   icon: <FileText        size={18} /> },
   { label: "Patterns",  href: "/patterns",  icon: <BarChart2       size={18} /> },
   { label: "Profile",   href: "/profile",   icon: <User            size={18} /> },
+  { label: "Agent",     href: "/agent",     icon: <Bot             size={18} /> },
+  { label: "Scripts",   href: "/scripts",   icon: <Terminal        size={18} /> },
+  { label: "Logs",      href: "/logs",      icon: <ScrollText      size={18} /> },
 ];
 
 /**
