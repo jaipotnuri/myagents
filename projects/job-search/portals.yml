@@ -573,3 +573,41 @@ tracked_companies:
     careers_url: https://jobs.lever.co/imo-online
     notes: "Telehealth + clinical AI. Discovered via Level 3 2026-04-10."
     enabled: true
+
+  # ==========================================================================
+  # NEW — Discovered via Level 3 WebSearch 2026-04-15
+  # ==========================================================================
+
+  - name: Ramp
+    careers_url: https://jobs.ashbyhq.com/ramp
+    notes: "NYC. AI-native finance platform. Applied AI Engineer role active. Discovered via Level 3 2026-04-15."
+    enabled: true
+
+  - name: Cresta
+    careers_url: https://job-boards.greenhouse.io/cresta
+    api: https://boards-api.greenhouse.io/v1/boards/cresta/jobs
+    notes: "SF. AI agent platform for contact centers. Greenhouse board. Discovered via Level 3 2026-04-15."
+    enabled: true
+
+  - name: AssemblyAI
+    careers_url: https://job-boards.greenhouse.io/assemblyai
+    api: https://boards-api.greenhouse.io/v1/boards/assemblyai/jobs
+    notes: "SF. Speech AI / STT platform. Applied AI Engineer role active. Discovered via Level 3 2026-04-15."
+    enabled: true
+
+  - name: Snorkel AI
+    careers_url: https://job-boards.greenhouse.io/snorkelai
+    api: https://boards-api.greenhouse.io/v1/boards/snorkelai/jobs
+    notes: "SF. Data-centric AI / programmatic labeling. Staff Applied AI Engineer role active. Discovered via Level 3 2026-04-15."
+    enabled: true
+
+  - name: Inkeep
+    careers_url: https://jobs.ashbyhq.com/inkeep
+    notes: "SF. AI support + knowledge base for developer tools. Forward Deployed Engineer, AI Agents role active. Discovered via Level 3 2026-04-15."
+    enabled: true
+
+  - name: Together AI (Greenhouse)
+    careers_url: https://job-boards.greenhouse.io/togetherai
+    api: https://boards-api.greenhouse.io/v1/boards/togetherai/jobs
+    notes: "SF. Open-source LLM platform. Has Greenhouse board (Ashby 404). Voice AI ML Engineer role active. Discovered via Level 3 2026-04-15."
+    enabled: true
