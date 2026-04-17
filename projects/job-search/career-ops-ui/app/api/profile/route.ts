@@ -81,16 +81,56 @@ export async function GET() {
   const ymlPath = profileYmlPath();
   const cvPath  = cvMdPath();
 
-  // Read profile.yml
+  // Read profile.yml and extract key fields (handles both flat and nested YAML)
   let profileData: Record<string, string> = {};
   try {
     const raw = await fs.readFile(ymlPath, "utf-8");
-    profileData = parseSimpleYaml(raw);
+    const lines = raw.split("\n");
+    let currentSection = "";
+
+    for (const line of lines) {
+      const trimmed = line.trim();
+
+      // Skip comments and empty lines
+      if (!trimmed || trimmed.startsWith("#")) continue;
+
+      // Detect section headers (no leading space + colon)
+      if (!line.startsWith(" ") && trimmed.includes(":")) {
+        const colonIdx = trimmed.indexOf(":");
+        currentSection = trimmed.slice(0, colonIdx).toLowerCase();
+        continue;
+      }
+
+      // Parse key: value within sections
+      if (line.startsWith("  ") && trimmed.includes(":")) {
+        const colonIdx = trimmed.indexOf(":");
+        const key = trimmed.slice(0, colonIdx).trim();
+        const value = trimmed.slice(colonIdx + 1).trim().replace(/^["']|["']$/g, "");
+
+        // Map nested fields to flat structure
+        if (currentSection === "candidate") {
+          if (["full_name", "email", "location", "phone"].includes(key)) {
+            profileData[key] = value;
+          }
+        } else if (currentSection === "compensation") {
+          if (key === "target_range") {
+            profileData["comp_target"] = value;
+          }
+        } else if (currentSection === "location") {
+          if (key === "visa_status") {
+            profileData["visa_status"] = value;
+          }
+        } else if (currentSection === "narrative") {
+          if (key === "headline") {
+            profileData["north_star"] = value;
+          }
+        }
+      }
+    }
   } catch (err) {
     if ((err as NodeJS.ErrnoException).code !== "ENOENT") {
       console.error("[api/profile] Error reading profile.yml:", err);
     }
-    // Return empty fields — not a fatal error
   }
 
   // Read cv.md
@@ -120,25 +160,76 @@ export async function PUT(req: NextRequest) {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
 
-  // Read existing file to preserve any keys we don't manage
-  let existing: Record<string, string> = {};
-  try {
-    const raw = await fs.readFile(ymlPath, "utf-8");
-    existing = parseSimpleYaml(raw);
-  } catch {
-    // File doesn't exist yet — we'll create it
-  }
-
-  // Merge: incoming fields overwrite existing ones; unknown keys are preserved
-  const merged = { ...existing, ...body };
-
   // Remove the cvContent key — that's never stored in profile.yml
-  delete merged["cvContent"];
+  delete body["cvContent"];
 
   try {
+    // Read existing file to preserve structure
+    let raw: string;
+    try {
+      raw = await fs.readFile(ymlPath, "utf-8");
+    } catch {
+      raw = ""; // File doesn't exist yet
+    }
+
+    // Update nested fields in the YAML content
+    const lines = raw.split("\n");
+    let currentSection = "";
+    let output: string[] = [];
+    const fieldMap: Record<string, { section: string; key: string }> = {
+      full_name:   { section: "candidate", key: "full_name" },
+      email:       { section: "candidate", key: "email" },
+      location:    { section: "candidate", key: "location" },
+      phone:       { section: "candidate", key: "phone" },
+      comp_target: { section: "compensation", key: "target_range" },
+      visa_status: { section: "location", key: "visa_status" },
+      north_star:  { section: "narrative", key: "headline" },
+    };
+
+    const fieldsUpdated = new Set<string>();
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      const trimmed = line.trim();
+
+      // Track current section
+      if (!line.startsWith(" ") && trimmed.includes(":") && !trimmed.startsWith("#")) {
+        const colonIdx = trimmed.indexOf(":");
+        currentSection = trimmed.slice(0, colonIdx).toLowerCase();
+        output.push(line);
+        continue;
+      }
+
+      // Check if this line should be updated
+      let updated = false;
+      if (line.startsWith("  ") && trimmed.includes(":")) {
+        const colonIdx = trimmed.indexOf(":");
+        const key = trimmed.slice(0, colonIdx).trim();
+        const indent = "  ";
+
+        // Check each field in the body
+        for (const [fieldName, fieldValue] of Object.entries(body)) {
+          if (!fieldName || !fieldValue) continue;
+          const mapping = fieldMap[fieldName];
+          if (mapping && mapping.section === currentSection && mapping.key === key) {
+            output.push(`${indent}${key}: "${fieldValue.replace(/"/g, '\\"')}"`);
+            fieldsUpdated.add(fieldName);
+            updated = true;
+            break;
+          }
+        }
+      }
+
+      if (!updated) {
+        output.push(line);
+      }
+    }
+
+    const result = output.join("\n");
+
     // Ensure the config directory exists
     await fs.mkdir(path.dirname(ymlPath), { recursive: true });
-    await fs.writeFile(ymlPath, dumpSimpleYaml(merged), "utf-8");
+    await fs.writeFile(ymlPath, result, "utf-8");
     return NextResponse.json({ success: true });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Failed to write profile.yml";

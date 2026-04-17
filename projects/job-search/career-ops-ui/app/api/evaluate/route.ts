@@ -42,15 +42,29 @@ const MOCK_EVALUATION = {
 };
 
 // ---------------------------------------------------------------------------
-// Read a mode file from modes/ directory
+// Read user context files (cv.md, profile.yml) for the system prompt.
+// The mode files in modes/ are Claude Code tool-use prompts — they cannot
+// be used directly as system prompts for the messages API because they
+// instruct Claude to invoke tools like read_file / search. Instead we
+// pre-load the user's data server-side and inject it into the prompt.
 // ---------------------------------------------------------------------------
 
-function readModeFile(mode: string): string | null {
-  const allowedModes = ["oferta", "deep", "training"];
-  const safeName = allowedModes.includes(mode) ? mode : "oferta";
-  const filePath = path.join(CAREER_OPS_DIR, "modes", `${safeName}.md`);
-  if (!existsSync(filePath)) return null;
-  return readFileSync(filePath, "utf-8");
+function readUserContext(): string {
+  const snippets: string[] = [];
+
+  const cvPath = path.join(CAREER_OPS_DIR, "cv.md");
+  if (existsSync(cvPath)) {
+    const cv = readFileSync(cvPath, "utf-8").trim();
+    snippets.push(`## Candidate CV\n\n${cv}`);
+  }
+
+  const profilePath = path.join(CAREER_OPS_DIR, "config", "profile.yml");
+  if (existsSync(profilePath)) {
+    const profile = readFileSync(profilePath, "utf-8").trim();
+    snippets.push(`## Candidate Profile (profile.yml)\n\n\`\`\`yaml\n${profile}\n\`\`\``);
+  }
+
+  return snippets.join("\n\n");
 }
 
 // ---------------------------------------------------------------------------
@@ -127,11 +141,13 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ...MOCK_EVALUATION, _mock: true });
   }
 
-  // ── Load mode file ───────────────────────────────────────────────────────
-  const modeContent = readModeFile(mode);
-  const systemPrompt = modeContent
-    ? modeContent + JSON_INSTRUCTION
-    : `You are a senior career coach and technical recruiter. Evaluate the job description below against a strong AI/ML engineer profile.${JSON_INSTRUCTION}`;
+  // ── Build system prompt with pre-loaded user context ────────────────────
+  const userContext = readUserContext();
+  const systemPrompt =
+    `You are a senior career coach and technical recruiter specialising in AI/ML roles.\n\n` +
+    (userContext ? `${userContext}\n\n` : "") +
+    `Evaluate the job description the user provides against the candidate's CV and profile above.` +
+    JSON_INSTRUCTION;
 
   // ── Call Anthropic API ───────────────────────────────────────────────────
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });

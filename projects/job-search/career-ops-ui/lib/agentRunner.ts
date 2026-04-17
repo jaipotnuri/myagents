@@ -241,7 +241,9 @@ async function executeTool(
         const filePath = safePath(careerOpsDir, input.path as string);
         const dir = path.dirname(filePath);
         if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
-        appendFileSync(filePath, input.content as string, "utf-8");
+        const raw = input.content;
+        const contentStr = raw === undefined || raw === null ? "" : typeof raw === "string" ? raw : JSON.stringify(raw, null, 2);
+        appendFileSync(filePath, contentStr, "utf-8");
         const rel = input.path as string;
         if (!filesWritten.includes(rel)) filesWritten.push(rel);
         return `[append_file] Appended to: ${input.path}`;
@@ -303,7 +305,7 @@ async function executeTool(
 // Main agent loop
 // ---------------------------------------------------------------------------
 
-const MAX_ITERATIONS = 20;
+const MAX_ITERATIONS = 30;
 
 export async function runAgentMode(
   options: RunAgentModeOptions
@@ -326,9 +328,10 @@ export async function runAgentMode(
   let finalOutput = "";
 
   for (let iteration = 0; iteration < MAX_ITERATIONS; iteration++) {
+    const maxTokens = modeName === "scan" ? 1024 : 8192;
     const response = await client.messages.create({
       model: "claude-sonnet-4-5",
-      max_tokens: 4096,
+      max_tokens: maxTokens,
       system: systemPrompt,
       messages,
       tools: AGENT_TOOLS,
@@ -337,7 +340,7 @@ export async function runAgentMode(
     // Surface any text blocks as "thinking" events
     for (const block of response.content) {
       if (block.type === "text" && block.text.trim()) {
-        onEvent({ type: "thinking", text: block.text });
+        try { onEvent({ type: "thinking", text: block.text }); } catch { /* client disconnected, continue writing */ }
         finalOutput = block.text;
       }
     }
@@ -356,11 +359,11 @@ export async function runAgentMode(
     const toolResults: Anthropic.ToolResultBlockParam[] = [];
 
     for (const toolUse of toolUseBlocks) {
-      onEvent({
+      try { onEvent({
         type: "tool_call",
         name: toolUse.name,
         input: toolUse.input as Record<string, unknown>,
-      });
+      }); } catch { /* client disconnected, continue writing */ }
 
       const result = await executeTool(
         toolUse.name,
@@ -369,11 +372,11 @@ export async function runAgentMode(
         filesWritten
       );
 
-      onEvent({
+      try { onEvent({
         type: "tool_result",
         name: toolUse.name,
         content: result.slice(0, 600),
-      });
+      }); } catch { /* client disconnected, continue writing */ }
 
       toolResults.push({
         type: "tool_result",

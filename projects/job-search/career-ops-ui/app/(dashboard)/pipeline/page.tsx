@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   Clock,
   CheckCircle,
@@ -90,6 +91,7 @@ function StatusPill({ status }: { status: Status }) {
 // ─── Main page ────────────────────────────────────────────────────────────────
 
 export default function PipelinePage() {
+  const router = useRouter();
   const [queue, setQueue] = useState<QueueItem[]>([]);
   const [newUrl, setNewUrl] = useState("");
   const [loading, setLoading] = useState(true);
@@ -105,16 +107,16 @@ export default function PipelinePage() {
         const res = await fetch("/api/pipeline");
         if (res.ok) {
           const data: QueueItem[] = await res.json();
-          if (Array.isArray(data) && data.length > 0) {
+          if (Array.isArray(data)) {
             setQueue(data);
             setLoading(false);
             return;
           }
         }
       } catch {
-        // fall through to mock
+        // fall through to empty state on error
       }
-      setQueue(MOCK_DATA);
+      setQueue([]);
       setLoading(false);
     }
     load();
@@ -147,13 +149,11 @@ export default function PipelinePage() {
     setQueue((prev) => prev.filter((item) => item.id !== id));
   }
 
-  // ── Evaluate (optimistic toggle to evaluating) ──
+  // ── Evaluate — navigate to Agent page with URL pre-filled ──
   function evaluateItem(id: number) {
-    setQueue((prev) =>
-      prev.map((item) =>
-        item.id === id ? { ...item, status: "evaluating" } : item
-      )
-    );
+    const item = queue.find((i) => i.id === id);
+    if (!item) return;
+    router.push(`/agent?mode=oferta&input=${encodeURIComponent(item.url)}`);
   }
 
   // ── Skip (optimistic toggle to done) ──

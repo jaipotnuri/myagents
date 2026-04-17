@@ -60,10 +60,29 @@ export async function POST(
 
   const stream = new ReadableStream({
     start(controller) {
+      let controllerClosed = false;
+
+      function safeEnqueue(data: string) {
+        if (controllerClosed) return;
+        try {
+          controller.enqueue(encoder.encode(data));
+        } catch {
+          controllerClosed = true;
+        }
+      }
+
+      function safeClose() {
+        if (controllerClosed) return;
+        controllerClosed = true;
+        try {
+          controller.close();
+        } catch {
+          // already closed
+        }
+      }
+
       function emit(event: AgentEvent) {
-        controller.enqueue(
-          encoder.encode(`data: ${JSON.stringify(event)}\n\n`)
-        );
+        safeEnqueue(`data: ${JSON.stringify(event)}\n\n`);
       }
 
       runAgentMode({
@@ -73,16 +92,13 @@ export async function POST(
         onEvent: emit,
       })
         .then(async ({ output, filesWritten }) => {
-          // Emit final done event
           const doneEvent: AgentEvent = {
             type: "done",
             output,
             filesWritten,
           };
-          controller.enqueue(
-            encoder.encode(`data: ${JSON.stringify(doneEvent)}\n\n`)
-          );
-          controller.close();
+          safeEnqueue(`data: ${JSON.stringify(doneEvent)}\n\n`);
+          safeClose();
 
           // Log to runs.jsonl
           await appendLog({
@@ -97,10 +113,8 @@ export async function POST(
         .catch(async (err: unknown) => {
           const msg = err instanceof Error ? err.message : String(err);
           const errorEvent: AgentEvent = { type: "error", text: msg };
-          controller.enqueue(
-            encoder.encode(`data: ${JSON.stringify(errorEvent)}\n\n`)
-          );
-          controller.close();
+          safeEnqueue(`data: ${JSON.stringify(errorEvent)}\n\n`);
+          safeClose();
 
           await appendLog({
             command: `agent/${mode}`,

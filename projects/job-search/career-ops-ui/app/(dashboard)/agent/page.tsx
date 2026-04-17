@@ -1,6 +1,7 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   Bot,
   Play,
@@ -130,7 +131,8 @@ function EventLine({ event }: { event: AgentEvent }) {
 // Main page
 // ---------------------------------------------------------------------------
 
-export default function AgentPage() {
+function AgentPageInner() {
+  const searchParams = useSearchParams();
   const [mode, setMode] = useState<AllowedMode>("oferta");
   const [input, setInput] = useState("");
   const [events, setEvents] = useState<AgentEvent[]>([]);
@@ -142,6 +144,18 @@ export default function AgentPage() {
   const [error, setError] = useState<string | null>(null);
   const [showModeMenu, setShowModeMenu] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
+
+  // Pre-fill from query params (e.g. from Pipeline page evaluate button)
+  useEffect(() => {
+    const qMode = searchParams.get("mode") as AllowedMode | null;
+    const qInput = searchParams.get("input");
+    if (qMode && (ALLOWED_MODES as readonly string[]).includes(qMode)) {
+      setMode(qMode);
+    }
+    if (qInput) {
+      setInput(qInput);
+    }
+  }, [searchParams]);
   const outputRef = useRef<HTMLDivElement>(null);
 
   function appendEvent(ev: AgentEvent) {
@@ -433,5 +447,13 @@ export default function AgentPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function AgentPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center h-full text-slate-500">Loading…</div>}>
+      <AgentPageInner />
+    </Suspense>
   );
 }
