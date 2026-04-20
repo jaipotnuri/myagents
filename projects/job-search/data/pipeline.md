@@ -1,7 +1,100 @@
-# Pipeline Inbox
+# Pipeline — Pending Evaluation
 
-## Pending
-<!-- Add job URLs here, one per line -->
+## Pendientes
 
-## Processed
-https://www.anthropic.com/careers/senior-ai-engineer
+- [ ] https://job-boards.greenhouse.io/anthropic/jobs/5014500008 | Anthropic | Applied AI Engineer
+- [ ] https://job-boards.greenhouse.io/anthropic/jobs/5055488008 | Anthropic | Applied AI Engineer
+- [ ] https://job-boards.greenhouse.io/anthropic/jobs/5116274008 | Anthropic | Applied AI Engineer
+- [ ] https://job-boards.greenhouse.io/anthropic/jobs/5068226008 | Anthropic | Applied AI Engineer, Beneficial Deployments
+- [ ] https://job-boards.greenhouse.io/anthropic/jobs/5057647008 | Anthropic | Applied AI Engineer (Digital Natives Business)
+- [ ] https://job-boards.greenhouse.io/anthropic/jobs/5111942008 | Anthropic | Applied AI Engineer, Life Sciences (Beneficial Deployments)
+- [ ] https://job-boards.greenhouse.io/anthropic/jobs/5073277008 | Anthropic | Applied AI Engineer (Startups)
+- [ ] https://job-boards.greenhouse.io/anthropic/jobs/4985877008 | Anthropic | Forward Deployed Engineer, Applied AI
+- [ ] https://job-boards.greenhouse.io/anthropic/jobs/5012991008 | Anthropic | Forward Deployed Engineer, Applied AI
+- [ ] https://job-boards.greenhouse.io/anthropic/jobs/5121561008 | Anthropic | Forward Deployed Engineer, Applied AI
+- [ ] https://job-boards.greenhouse.io/anthropic/jobs/5121563008 | Anthropic | Forward Deployed Engineer, Applied AI
+- [ ] https://job-boards.greenhouse.io/anthropic/jobs/5079562008 | Anthropic | Forward Deployed Engineer, Applied AI (Federal Civilian)
+- [ ] https://job-boards.greenhouse.io/arizeai/jobs/5661972004 | Arize AI | AI Engineer, Instrumentation
+- [ ] https://job-boards.greenhouse.io/arizeai/jobs/5797408004 | Arize AI | AI Solutions Engineer
+- [ ] https://job-boards.greenhouse.io/arizeai/jobs/5769693004 | Arize AI | AI Solutions Engineer (Charlotte)
+- [ ] https://job-boards.greenhouse.io/gleanwork/jobs/4605215005 | Glean | Machine Learning Engineer, AI Assistant & Autonomous AI Agents
+- [ ] https://job-boards.greenhouse.io/gleanwork/jobs/4669417005 | Glean | Machine Learning Engineer, LLM Evals & Observability
+- [ ] https://job-boards.greenhouse.io/gleanwork/jobs/4006735005 | Glean | Machine Learning Engineer, Search Quality
+- [ ] https://job-boards.greenhouse.io/gleanwork/jobs/4651990005 | Glean | Founding Forward Deployed Engineer
+- [ ] https://job-boards.greenhouse.io/gleanwork/jobs/4659412005 | Glean | Founding Forward Deployed Engineer
+- [ ] https://job-boards.greenhouse.io/gleanwork/jobs/4651991005 | Glean | Founding Forward Deployed Engineer
+- [ ] https://job-boards.greenhouse.io/airtable/jobs/8409168002 | Airtable | AI Agent Architect, Customer Experience
+- [ ] https://job-boards.greenhouse.io/airtable/jobs/8477376002 | Airtable | Forward Deployed Engineer, EMEA
+- [ ] https://job-boards.greenhouse.io/vercel/jobs/5778418004 | Vercel | Forward-Deployed Engineer
+- [ ] https://job-boards.greenhouse.io/vercel/jobs/5872425004 | Vercel | Forward Deployed Engineer, v0
+- [ ] https://job-boards.greenhouse.io/vercel/jobs/5752684004 | Vercel | Forward-Deployed Engineer
+- [ ] http://stability.ai/careers?gh_jid=4712826101 | Stability AI | Generative AI Inference Engineer
+- [ ] https://job-boards.greenhouse.io/intercom/jobs/7556413 | Intercom | Forward Deployed Software Engineer
+- [ ] https://job-boards.greenhouse.io/intercom/jobs/7462098 | Intercom | Senior Forward Deployed Engineer
+- [ ] https://job-boards.greenhouse.io/intercom/jobs/7218259 | Intercom | Senior Forward Deployed Engineer
+- [ ] https://job-boards.greenhouse.io/intercom/jobs/7310770 | Intercom | Staff Forward Deployed Engineer
+- [ ] https://job-boards.greenhouse.io/intercom/jobs/7462110 | Intercom | Staff Forward Deployed Engineer
+- [ ] https://job-boards.greenhouse.io/celonis/jobs/7681593003 | Celonis | Applied AI Engineer
+- [ ] https://job-boards.eu.greenhouse.io/polyai/jobs/4796935101 | PolyAI | Forward Deployed AI Engineer (PST timezone)
+- [ ] https://job-boards.greenhouse.io/cresta/jobs/4093613008 | Cresta | Machine Learning Engineer (AI Agents)
+- [ ] https://job-boards.greenhouse.io/cresta/jobs/4759347008 | Cresta | Senior Forward Deployed Engineer (AI Agent)
+- [ ] https://job-boards.greenhouse.io/cresta/jobs/5107283008 | Cresta | Senior Forward Deployed Engineer (AI Agent)
+- [ ] https://job-boards.greenhouse.io/cresta/jobs/4595480008 | Cresta | Senior Forward Deployed Engineer (AI Agent)
+- [ ] https://job-boards.greenhouse.io/cresta/jobs/4741283008 | Cresta | Senior Machine Learning Engineer
+- [ ] https://job-boards.greenhouse.io/cresta/jobs/4249943008 | Cresta | Senior Machine Learning Engineer
+- [ ] https://job-boards.greenhouse.io/cresta/jobs/4741284008 | Cresta | Staff Machine Learning Engineer
+- [ ] https://job-boards.greenhouse.io/assemblyai/jobs/4632922005 | AssemblyAI | Forward Deployed Engineer
+- [ ] https://job-boards.greenhouse.io/snorkelai/jobs/5709067004 | Snorkel AI | Applied AI Engineer - AI Solutions
+- [ ] https://job-boards.greenhouse.io/snorkelai/jobs/5689470004 | Snorkel AI | Forward Deployed Engineer - Data-as-a-Service
+- [ ] https://job-boards.greenhouse.io/snorkelai/jobs/5831080004 | Snorkel AI | Staff Applied AI Engineer - Pre-Sales
+- [ ] https://job-boards.greenhouse.io/snorkelai/jobs/5971772004 | Snorkel AI | Senior AI/ML Engineer
+- [ ] https://job-boards.greenhouse.io/togetherai/jobs/4626694007 | Together AI | Machine Learning Engineer
+- [ ] https://job-boards.greenhouse.io/togetherai/jobs/4385540007 | Together AI | Machine Learning Engineer - Inference
+- [ ] https://job-boards.greenhouse.io/togetherai/jobs/4835988007 | Together AI | Machine Learning, Platform Engineer
+- [ ] https://job-boards.greenhouse.io/togetherai/jobs/4687884007 | Together AI | LLM Inference Frameworks and Optimization Engineer
+- [ ] https://job-boards.greenhouse.io/togetherai/jobs/5088817007 | Together AI | Senior Machine Learning Engineer, Voice AI
+- [ ] https://job-boards.greenhouse.io/togetherai/jobs/5028862007 | Together AI | Senior AI Infrastructure Engineer
+- [ ] https://job-boards.eu.greenhouse.io/axiomaticai/jobs/4720346101 | Axiomatic AI | Applied AI Engineer
+- [ ] https://job-boards.eu.greenhouse.io/axiomaticai/jobs/4704647101 | Axiomatic AI | Senior Applied AI Engineer
+- [ ] https://job-boards.eu.greenhouse.io/axiomaticai/jobs/4798988101 | Axiomatic AI | Forward Deployed Engineer
+- [ ] https://job-boards.greenhouse.io/defenseunicorns/jobs/4980238007 | Defense Unicorns | Forward Deployed AI Engineer
+- [ ] https://job-boards.greenhouse.io/censys/jobs/8286578002 | Censys | Senior Machine Learning Engineer
+- [ ] https://jobs.ashbyhq.com/baseten/84c1801c-1a65-49fb-aaaa-beeafd530e7e | Baseten | Forward Deployed Engineer
+- [ ] https://jobs.ashbyhq.com/perplexity/8a976851-9bef-4b07-8d36-567fa9540aef | Perplexity | Member of Technical Staff (AI Inference Engineer)
+- [ ] https://jobs.ashbyhq.com/perplexity/598e1f7d-b802-4de2-99ac-90eb2bc33315 | Perplexity | Member of Technical Staff (AI Infrastructure Engineer)
+- [ ] https://jobs.ashbyhq.com/perplexity/aa511ea8-96e3-42ba-b28f-5e222170bcee | Perplexity | Member of Technical Staff (Forward Deployed Engineer, Applied AI)
+- [ ] https://jobs.ashbyhq.com/perplexity/0190699f-010b-44f2-8399-278899fef018 | Perplexity | Member of Technical Staff (Machine Learning Engineer, Search)
+- [ ] https://jobs.ashbyhq.com/elevenlabs/6c4c57c1-ec72-42ba-af3a-eb7aebbde2e6 | ElevenLabs | Forward Deployed Engineer - Software Engineer
+- [ ] https://jobs.ashbyhq.com/bland/d8199cb9-04e8-4638-ad03-b93fb189034d | Bland AI | Machine Learning Engineer, TTS Systems
+- [ ] https://jobs.ashbyhq.com/bland/823904dd-f958-45c8-8e9a-4d9755cd03f0 | Bland AI | Forward Deployed Engineer
+- [ ] https://jobs.ashbyhq.com/inkeep/f277f68d-c397-4919-beeb-67ee1e19dc91 | Inkeep | Forward Deployed Engineer, AI Agents
+- [ ] https://jobs.ashbyhq.com/llamaindex/fd7a074f-7d80-44b7-8520-8ac787387e92 | LlamaIndex | Multimodal AI Engineer, Document Understanding
+- [ ] https://jobs.ashbyhq.com/cohere/1fa01a03-9253-4f62-8f10-0fe368b38cb9 | Cohere | Applied AI Engineer – Agentic Workflows
+- [ ] https://jobs.ashbyhq.com/ramp/d204e136-2749-42de-82b4-88a0dd352090 | Ramp | Applied AI Engineer
+- [ ] https://jobs.ashbyhq.com/zello/2fa8cd4a-7ddb-40c6-8577-4a004c182e80 | Zello | Applied AI Engineer
+- [ ] https://jobs.ashbyhq.com/superplane/153cfad4-227d-4605-9581-710f4df869e0 | SuperPlane | Applied AI Engineer
+- [ ] https://jobs.ashbyhq.com/zapier/83ab14be-cd19-4091-84aa-2aa23833ab7d | Zapier | Applied AI Engineer
+- [ ] https://jobs.ashbyhq.com/genies/ae03b525-fe3e-4c81-9832-be6405e7fd0a | Genies | Senior Machine Learning Engineer, AI Agent
+- [ ] https://jobs.ashbyhq.com/intrinsic-safety/1f7eea06-129d-4cc8-8764-f3a36a5a7426 | Variance | Forward Deployed AI Engineer
+- [ ] https://jobs.ashbyhq.com/synthflow/5e7b11f1-b915-46f2-bab4-ec2782118373 | Synthflow AI | Forward Deployed Engineer
+- [ ] https://jobs.ashbyhq.com/P-1%20AI/75c853db-4a8d-4f23-b28f-05a2231e70e6 | P-1 AI | Forward Deployed Engineer
+- [ ] https://jobs.ashbyhq.com/Profound/b076c997-0ba3-4d3c-9dc9-ad0b3ed49b05 | Profound | Forward Deployed Engineer
+- [ ] https://job-boards.greenhouse.io/labelbox/jobs/4640927007 | Labelbox | Forward Deployed Engineer
+- [ ] https://job-boards.greenhouse.io/fal/jobs/4129387009 | fal | Forward Deployed Engineer
+- [ ] https://job-boards.greenhouse.io/pallet/jobs/5072543007 | Pallet | Forward Deployed Software Engineer (AI Agents)
+- [ ] https://job-boards.greenhouse.io/xai/jobs/4701523007 | xAI | Forward Deployed AI Engineer - Enterprise
+- [ ] https://job-boards.greenhouse.io/scaleai/jobs/4597399005 | Scale AI | Forward Deployed AI Engineer, Enterprise
+- [ ] https://job-boards.greenhouse.io/scaleai/jobs/4314834005 | Scale AI | Machine Learning Engineer, LLM Infrastructure
+- [ ] https://jobs.lever.co/agiloft/e85a0460-4a4c-48b4-a42e-0ff4f124d890 | Agiloft | Forward Deployed Engineer - AI Solutions
+- [ ] https://jobs.lever.co/imo-online/6fd7edae-2cf1-4d24-8e1c-99ac967ce5df | IMO Health | Staff AI Engineer
+- [ ] https://jobs.lever.co/imo-online/7076909a-2ce8-4c69-957f-ca36a3abf683 | IMO Health | Staff AI / MLOps Engineer - Clinical AI
+- [ ] https://job-boards.greenhouse.io/agencywithin/jobs/5056863007 | WITHIN | AI Engineer
+- [ ] https://job-boards.greenhouse.io/assetwatch/jobs/4662993005 | AssetWatch | Senior Applied AI Engineer
+- [ ] https://job-boards.greenhouse.io/grafanalabs/jobs/5559973004 | Grafana Labs | Senior Software Engineer, GenAI & ML Evaluation Frameworks
+- [ ] https://openai.com/careers/applied-ai-engineer-codex-core-agent-san-francisco/ | OpenAI | Applied AI Engineer, Codex Core Agent
+- [ ] https://openai.com/careers/research-engineer-applied-ai-engineering-san-francisco/ | OpenAI | Research Engineer, Applied AI Engineering
+- [ ] https://openai.com/careers/machine-learning-engineer-integrity-san-francisco/ | OpenAI | Machine Learning Engineer, Integrity
+- [ ] https://careers.salesforce.com/en/jobs/jr305198/ai-forward-deployed-engineer-seniorleadprincipal/ | Salesforce | AI Forward Deployed Engineer (Senior/Lead/Principal)
+- [ ] https://careers.salesforce.com/en/jobs/jr312405/ai-forward-deployed-engineer-early-career/ | Salesforce | AI Forward Deployed Engineer (Early Career)
+- [ ] https://www.databricks.com/company/careers/engineering---pipeline/sr-machine-learning-engineer--7276195002 | Databricks | Sr. Machine Learning Engineer
+- [ ] https://www.databricks.com/company/careers/professional-services-operations/sr-ml-engineer---gen-ai--llm--7863682002 | Databricks | Sr. ML Engineer - Gen AI & LLM

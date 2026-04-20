@@ -71,6 +71,45 @@ title_filter:
     - "Head of"
 
 # ---------------------------------------------------------------------------
+# Location filter — US-only
+# Jobs must match at least one "required" term OR have no location listed.
+# Jobs matching any "exclude" term are skipped.
+# ---------------------------------------------------------------------------
+
+location_filter:
+  required:
+    - "United States"
+    - "USA"
+    - " US"
+    - "Remote"
+    - "US Remote"
+    - "Remote US"
+    - "Anywhere"
+    - "San Francisco"
+    - "New York"
+    - "Seattle"
+    - "Austin"
+    - "Boston"
+    - "Chicago"
+    - "Los Angeles"
+    - "Denver"
+    - "Atlanta"
+    - "Raleigh"
+  exclude:
+    - "Canada only"
+    - "UK only"
+    - "Europe only"
+    - "Germany"
+    - "France"
+    - "Netherlands"
+    - "Australia"
+    - "India"
+    - "Brazil"
+    - "LATAM"
+    - "EMEA only"
+    - "APAC"
+
+# ---------------------------------------------------------------------------
 # Search queries — broad discovery across job boards
 # ---------------------------------------------------------------------------
 
@@ -610,4 +649,70 @@ tracked_companies:
     careers_url: https://job-boards.greenhouse.io/togetherai
     api: https://boards-api.greenhouse.io/v1/boards/togetherai/jobs
     notes: "SF. Open-source LLM platform. Has Greenhouse board (Ashby 404). Voice AI ML Engineer role active. Discovered via Level 3 2026-04-15."
+    enabled: true
+
+  # ==========================================================================
+  # NEW — Discovered via Level 3 WebSearch 2026-04-16
+  # ==========================================================================
+
+  - name: Scale AI (Greenhouse)
+    careers_url: https://job-boards.greenhouse.io/scaleai
+    api: https://boards-api.greenhouse.io/v1/boards/scaleai/jobs
+    notes: "SF. AI data platform. Greenhouse board active (Ashby 404 for scale-ai). FDE + MLE LLM roles active. Discovered via Level 3 2026-04-16."
+    enabled: true
+
+  - name: xAI (Greenhouse)
+    careers_url: https://job-boards.greenhouse.io/xai
+    api: https://boards-api.greenhouse.io/v1/boards/xai/jobs
+    notes: "SF. Grok models. Greenhouse board. Forward Deployed AI Engineer Enterprise role active. Discovered via Level 3 2026-04-16."
+    enabled: true
+
+  - name: Labelbox
+    careers_url: https://job-boards.greenhouse.io/labelbox
+    api: https://boards-api.greenhouse.io/v1/boards/labelbox/jobs
+    notes: "SF. ML data labeling platform for AI teams. FDE role active. Discovered via Level 3 2026-04-16."
+    enabled: true
+
+  - name: fal
+    careers_url: https://job-boards.greenhouse.io/fal
+    api: https://boards-api.greenhouse.io/v1/boards/fal/jobs
+    notes: "SF. Serverless AI inference platform. FDE role active. Discovered via Level 3 2026-04-16."
+    enabled: true
+
+  - name: Synthflow AI
+    careers_url: https://jobs.ashbyhq.com/synthflow
+    notes: "US remote. Voice AI phone agent platform. Forward Deployed Engineer role active. Discovered via Level 3 2026-04-16."
+    enabled: true
+
+  - name: Variance
+    careers_url: https://jobs.ashbyhq.com/intrinsic-safety
+    notes: "US. AI deployment into customer data backends. Forward Deployed AI Engineer role active. Discovered via Level 3 2026-04-16."
+    enabled: true
+
+  - name: Profound
+    careers_url: https://jobs.ashbyhq.com/Profound
+    notes: "US. AI for Fortune 500 clients. Forward Deployed Engineer role active. Discovered via Level 3 2026-04-16."
+    enabled: true
+
+  - name: Grafana Labs
+    careers_url: https://job-boards.greenhouse.io/grafanalabs
+    api: https://boards-api.greenhouse.io/v1/boards/grafanalabs/jobs
+    notes: "US remote. Observability platform. GenAI & ML Evaluation Frameworks engineer role active. Discovered via Level 3 2026-04-16."
+    enabled: true
+
+  - name: AssetWatch
+    careers_url: https://job-boards.greenhouse.io/assetwatch
+    api: https://boards-api.greenhouse.io/v1/boards/assetwatch/jobs
+    notes: "US. Industrial AI monitoring. Senior Applied AI Engineer role active. Discovered via Level 3 2026-04-16."
+    enabled: true
+
+  - name: Agiloft
+    careers_url: https://jobs.lever.co/agiloft
+    notes: "US. Contract lifecycle management + AI. Forward Deployed Engineer AI Solutions role on Lever. Discovered via Level 3 2026-04-16."
+    enabled: true
+
+  - name: Pallet
+    careers_url: https://job-boards.greenhouse.io/pallet
+    api: https://boards-api.greenhouse.io/v1/boards/pallet/jobs
+    notes: "US. AI agents for logistics companies. Forward Deployed Software Engineer AI Agents role active. Discovered via Level 3 2026-04-16."
     enabled: true

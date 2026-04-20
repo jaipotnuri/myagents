@@ -131,6 +131,10 @@ function CompletenessBar({ profile }: { profile: ProfileFields }) {
 
 export default function ProfilePage() {
   const [cvContent,    setCvContent]    = useState<string>("");
+  const [cvDraft,      setCvDraft]      = useState<string>("");
+  const [cvEditMode,   setCvEditMode]   = useState(false);
+  const [cvSaving,     setCvSaving]     = useState(false);
+  const [cvSaveMsg,    setCvSaveMsg]    = useState<string | null>(null);
   const [profile,      setProfile]      = useState<ProfileFields>(EMPTY_PROFILE);
   const [editMode,     setEditMode]     = useState(false);
   const [draft,        setDraft]        = useState<ProfileFields>(EMPTY_PROFILE);
@@ -157,6 +161,7 @@ export default function ProfilePage() {
         setDraft(p);
         if (data.cvContent) {
           setCvContent(data.cvContent as string);
+          setCvDraft(data.cvContent as string);
         }
       })
       .catch(() => {/* keep defaults */})
@@ -175,6 +180,26 @@ export default function ProfilePage() {
   function handleCancel() {
     setDraft({ ...profile });
     setEditMode(false);
+  }
+
+  async function handleCvSave() {
+    setCvSaving(true);
+    try {
+      const res = await fetch("/api/cv", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content: cvDraft }),
+      });
+      if (!res.ok) throw new Error("Save failed");
+      setCvContent(cvDraft);
+      setCvEditMode(false);
+      setCvSaveMsg("Saved ✓");
+    } catch {
+      setCvSaveMsg("Save failed");
+    } finally {
+      setCvSaving(false);
+      setTimeout(() => setCvSaveMsg(null), 3000);
+    }
   }
 
   async function handleSave() {
@@ -217,13 +242,46 @@ export default function ProfilePage() {
       {/* Two-panel body */}
       <div className="flex flex-1 gap-0 overflow-hidden">
         {/* ---------------------------------------------------------------- */}
-        {/* Left panel — CV Viewer                                            */}
+        {/* Left panel — CV Viewer / Editor                                   */}
         {/* ---------------------------------------------------------------- */}
         <div className="flex w-1/2 flex-col border-r border-slate-700 overflow-hidden">
           {/* Panel header */}
-          <div className="flex flex-shrink-0 items-center gap-2 border-b border-slate-700 bg-slate-800/60 px-5 py-3">
-            <FileText className="h-4 w-4 text-indigo-400" />
-            <h2 className="text-sm font-semibold text-slate-200">cv.md</h2>
+          <div className="flex flex-shrink-0 items-center justify-between border-b border-slate-700 bg-slate-800/60 px-5 py-3">
+            <div className="flex items-center gap-2">
+              <FileText className="h-4 w-4 text-indigo-400" />
+              <h2 className="text-sm font-semibold text-slate-200">cv.md</h2>
+              {cvSaveMsg && (
+                <span className={`text-xs font-medium ${cvSaveMsg.includes("✓") ? "text-green-400" : "text-red-400"}`}>
+                  {cvSaveMsg}
+                </span>
+              )}
+            </div>
+            {!cvEditMode ? (
+              <button
+                onClick={() => { setCvDraft(cvContent); setCvEditMode(true); }}
+                className="flex items-center gap-1.5 rounded-lg border border-slate-600 bg-slate-700 px-3 py-1.5 text-xs font-medium text-slate-200 transition-colors hover:border-indigo-500 hover:text-indigo-300"
+              >
+                <Edit2 className="h-3.5 w-3.5" />
+                Edit
+              </button>
+            ) : (
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setCvEditMode(false)}
+                  className="rounded-lg border border-slate-600 bg-slate-700 px-3 py-1.5 text-xs font-medium text-slate-400 transition-colors hover:text-slate-200"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleCvSave}
+                  disabled={cvSaving}
+                  className="flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-indigo-700 disabled:opacity-60"
+                >
+                  {cvSaving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
+                  Save
+                </button>
+              </div>
+            )}
           </div>
 
           {/* CV content */}
@@ -238,6 +296,14 @@ export default function ProfilePage() {
                 <div className="h-3 w-full rounded bg-slate-700/60" />
                 <div className="h-3 w-3/4 rounded bg-slate-700/60" />
               </div>
+            ) : cvEditMode ? (
+              <textarea
+                value={cvDraft}
+                onChange={(e) => setCvDraft(e.target.value)}
+                className="h-full w-full resize-none bg-transparent font-mono text-sm text-slate-200 placeholder-slate-600 focus:outline-none"
+                placeholder="# Your Name&#10;&#10;## Summary&#10;..."
+                spellCheck={false}
+              />
             ) : cvContent ? (
               <MarkdownRenderer content={cvContent} />
             ) : (

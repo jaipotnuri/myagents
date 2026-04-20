@@ -35,6 +35,7 @@ export interface RunAgentModeOptions {
   userMessage: string;
   careerOpsDir: string;
   onEvent: (event: AgentEvent) => void;
+  conversationHistory?: { role: string; content: string }[];
 }
 
 export interface RunAgentModeResult {
@@ -209,7 +210,8 @@ async function executeTool(
   name: string,
   input: Record<string, unknown>,
   careerOpsDir: string,
-  filesWritten: string[]
+  filesWritten: string[],
+  modeName: string
 ): Promise<string> {
   try {
     switch (name) {
@@ -226,27 +228,29 @@ async function executeTool(
       }
 
       case "write_file": {
-        const filePath = safePath(careerOpsDir, input.path as string);
+        const resolvedPath = resolveReportPath(input.path as string, modeName);
+        const filePath = safePath(careerOpsDir, resolvedPath);
         const dir = path.dirname(filePath);
         if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
         const raw = input.content;
         const contentStr = raw === undefined || raw === null ? "" : typeof raw === "string" ? raw : JSON.stringify(raw, null, 2);
         writeFileSync(filePath, contentStr, "utf-8");
-        const rel = input.path as string;
+        const rel = resolvedPath;
         if (!filesWritten.includes(rel)) filesWritten.push(rel);
-        return `[write_file] Written: ${input.path}`;
+        return `[write_file] Written: ${resolvedPath}`;
       }
 
       case "append_file": {
-        const filePath = safePath(careerOpsDir, input.path as string);
+        const resolvedPath = resolveReportPath(input.path as string, modeName);
+        const filePath = safePath(careerOpsDir, resolvedPath);
         const dir = path.dirname(filePath);
         if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
         const raw = input.content;
         const contentStr = raw === undefined || raw === null ? "" : typeof raw === "string" ? raw : JSON.stringify(raw, null, 2);
         appendFileSync(filePath, contentStr, "utf-8");
-        const rel = input.path as string;
+        const rel = resolvedPath;
         if (!filesWritten.includes(rel)) filesWritten.push(rel);
-        return `[append_file] Appended to: ${input.path}`;
+        return `[append_file] Appended to: ${resolvedPath}`;
       }
 
       case "list_dir": {
@@ -307,10 +311,43 @@ async function executeTool(
 
 const MAX_ITERATIONS = 30;
 
+// ---------------------------------------------------------------------------
+// Mode → report subfolder routing
+// ---------------------------------------------------------------------------
+
+const MODE_REPORT_DIRS: Record<string, string> = {
+  oferta:           "reports/evaluations",
+  deep:             "reports/deep-research",
+  "interview-prep": "reports/interview-prep",
+  contacto:         "reports/linkedin",
+  training:         "reports/training",
+  apply:            "reports/apply",
+  scan:             "reports/scanner",
+  pdf:              "output",
+};
+
+/** Reroute `reports/foo.md` to the mode-specific subfolder. */
+function resolveReportPath(rawPath: string, modeName: string): string {
+  if (!rawPath.startsWith("reports/") && !rawPath.startsWith("output/")) {
+    return rawPath;
+  }
+  const subdir = MODE_REPORT_DIRS[modeName];
+  if (!subdir) return rawPath;
+  // If already nested (e.g. reports/evaluations/xxx.md) leave it alone
+  if (rawPath.startsWith(subdir + "/")) return rawPath;
+  // Strip the leading "reports/" or "output/" prefix, then re-prefix with subdir
+  const filename = rawPath.replace(/^[^/]+\//, "");
+  return `${subdir}/${filename}`;
+}
+
+// ---------------------------------------------------------------------------
+// Main agent loop
+// ---------------------------------------------------------------------------
+
 export async function runAgentMode(
   options: RunAgentModeOptions
 ): Promise<RunAgentModeResult> {
-  const { modeName, userMessage, careerOpsDir, onEvent } = options;
+  const { modeName, userMessage, careerOpsDir, onEvent, conversationHistory = [] } = options;
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
@@ -321,21 +358,49 @@ export async function runAgentMode(
   const systemPrompt = readModeSystemPrompt(careerOpsDir, modeName);
   const filesWritten: string[] = [];
 
+  // Build message history: prior turns + current user message
   const messages: Anthropic.MessageParam[] = [
+    ...conversationHistory.map((m) => ({
+      role: m.role as "user" | "assistant",
+      content: m.content,
+    })),
     { role: "user", content: userMessage },
   ];
 
   let finalOutput = "";
 
   for (let iteration = 0; iteration < MAX_ITERATIONS; iteration++) {
-    const maxTokens = modeName === "scan" ? 1024 : 8192;
-    const response = await client.messages.create({
-      model: "claude-sonnet-4-5",
-      max_tokens: maxTokens,
-      system: systemPrompt,
-      messages,
-      tools: AGENT_TOOLS,
-    });
+    const maxTokens = modeName === "scan" ? 2048 : 8192;
+
+    // Retry loop for 429 rate-limit errors
+    let response: Anthropic.Message | null = null;
+    for (let attempt = 0; attempt < 4; attempt++) {
+      try {
+        response = await client.messages.create({
+          model: "claude-sonnet-4-6",
+          max_tokens: maxTokens,
+          system: systemPrompt,
+          messages,
+          tools: AGENT_TOOLS,
+        });
+        break; // success
+      } catch (err) {
+        const isRateLimit =
+          err instanceof Error &&
+          (err.message.includes("429") || err.message.includes("rate_limit"));
+        if (isRateLimit && attempt < 3) {
+          const waitMs = [10_000, 20_000, 40_000][attempt];
+          try { onEvent({ type: "thinking", text: `Rate limited — retrying in ${waitMs / 1000}s…` }); } catch { /* ok */ }
+          await new Promise((r) => setTimeout(r, waitMs));
+        } else {
+          throw err;
+        }
+      }
+    }
+    if (!response) throw new Error("Failed to get response after retries");
+
+    // Small delay between iterations to reduce burst rate
+    if (iteration > 0) await new Promise((r) => setTimeout(r, 1500));
 
     // Surface any text blocks as "thinking" events
     for (const block of response.content) {
@@ -369,7 +434,8 @@ export async function runAgentMode(
         toolUse.name,
         toolUse.input as Record<string, unknown>,
         careerOpsDir,
-        filesWritten
+        filesWritten,
+        modeName
       );
 
       try { onEvent({

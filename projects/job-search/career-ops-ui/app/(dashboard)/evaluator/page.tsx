@@ -1,7 +1,16 @@
 "use client";
 
-import { useState } from "react";
-import { Zap, CheckCircle, Loader2 } from "lucide-react";
+import { useRef, useState } from "react";
+import { Zap, CheckCircle, Loader2, Send, Bot, User } from "lucide-react";
+
+// Modes that use the structured /api/evaluate endpoint (scorecard output)
+const EVAL_MODES = new Set(["oferta", "deep", "training"]);
+
+// Chat message for interactive agent modes
+interface ChatMessage {
+  role: "user" | "assistant";
+  content: string;
+}
 
 // ---------------------------------------------------------------------------
 // Mock evaluation result — same shape returned by POST /api/evaluate
@@ -33,7 +42,27 @@ const MOCK_RESULT = {
 };
 
 type EvalResult = typeof MOCK_RESULT & { _mock?: boolean };
-type Mode = "oferta" | "deep" | "training";
+type Mode = "oferta" | "deep" | "training" | "interview-prep" | "contacto" | "pdf" | "apply";
+
+const MODE_LABELS: Record<Mode, string> = {
+  oferta:           "Evaluate Offer",
+  deep:             "Deep Research",
+  training:         "Training/Course",
+  "interview-prep": "Interview Prep",
+  contacto:         "LinkedIn Outreach",
+  pdf:              "Generate CV PDF",
+  apply:            "Apply Assistant",
+};
+
+const MODE_HINTS: Record<Mode, string> = {
+  oferta:           "Paste a job description or job posting URL",
+  deep:             "Paste a company name, URL, or job link for deep research",
+  training:         "Paste a course name, URL, or describe the certification",
+  "interview-prep": "Paste a company name and role, or a job link",
+  contacto:         "Paste a job link or company name to find LinkedIn contacts",
+  pdf:              "Paste the job description or role title to tailor the CV for",
+  apply:            "Paste the job application URL or job description",
+};
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -96,17 +125,100 @@ function DimensionRow({ label, weight, score }: { label: string; weight: number;
 // Page
 // ---------------------------------------------------------------------------
 export default function EvaluatorPage() {
-  const [mode, setMode]       = useState<Mode>("oferta");
-  const [input, setInput]     = useState("");
-  const [loading, setLoading] = useState(false);
-  const [result, setResult]   = useState<EvalResult | null>(null);
-  const [saved, setSaved]       = useState(false);
-  const [saving, setSaving]     = useState(false);
+  const [mode, setMode]           = useState<Mode>("oferta");
+  const [input, setInput]         = useState("");
+  const [loading, setLoading]     = useState(false);
+  const [result, setResult]       = useState<EvalResult | null>(null);
+  const [saved, setSaved]         = useState(false);
+  const [saving, setSaving]       = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
-  const [error, setError]       = useState<string | null>(null);
+  const [error, setError]         = useState<string | null>(null);
+
+  // Agent chat state (for non-eval modes)
+  const [chatHistory, setChatHistory]   = useState<ChatMessage[]>([]);
+  const [chatInput, setChatInput]       = useState("");
+  const [agentStreaming, setAgentStreaming] = useState(false);
+  const [agentStreamText, setAgentStreamText] = useState("");
+  const chatEndRef = useRef<HTMLDivElement>(null);
+
+  const isAgentMode = !EVAL_MODES.has(mode);
+
+  function resetChat() {
+    setChatHistory([]);
+    setChatInput("");
+    setAgentStreamText("");
+  }
+
+  async function streamAgentMode(userMsg: string, history: ChatMessage[]) {
+    setAgentStreaming(true);
+    setAgentStreamText("");
+
+    const allHistory: ChatMessage[] = [...history, { role: "user", content: userMsg }];
+    setChatHistory(allHistory);
+
+    let accumulated = "";
+    try {
+      const res = await fetch(`/api/agent/${mode}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          input: userMsg,
+          conversationHistory: history,
+        }),
+      });
+
+      if (!res.ok || !res.body) {
+        const err = await res.text();
+        setChatHistory((prev) => [
+          ...prev,
+          { role: "assistant", content: `Error: ${err || res.statusText}` },
+        ]);
+        return;
+      }
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        const chunk = decoder.decode(value, { stream: true });
+        for (const line of chunk.split("\n")) {
+          if (!line.startsWith("data: ")) continue;
+          try {
+            const event = JSON.parse(line.slice(6));
+            if (event.type === "thinking" && event.text) {
+              accumulated += event.text;
+              setAgentStreamText(accumulated);
+            } else if (event.type === "done") {
+              if (event.output) accumulated = event.output;
+              setAgentStreamText(accumulated);
+            }
+          } catch { /* skip malformed */ }
+        }
+      }
+    } catch (err) {
+      accumulated = `Connection error: ${err instanceof Error ? err.message : String(err)}`;
+    } finally {
+      setChatHistory((prev) => [
+        ...prev,
+        { role: "assistant", content: accumulated || "(No output)" },
+      ]);
+      setAgentStreamText("");
+      setAgentStreaming(false);
+      setTimeout(() => chatEndRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
+    }
+  }
 
   async function handleEvaluate() {
     if (!input.trim()) return;
+
+    if (isAgentMode) {
+      resetChat();
+      await streamAgentMode(input.trim(), []);
+      return;
+    }
+
     setLoading(true);
     setResult(null);
     setSaved(false);
@@ -128,6 +240,13 @@ export default function EvaluatorPage() {
     } finally {
       setLoading(false);
     }
+  }
+
+  async function handleChatReply() {
+    if (!chatInput.trim() || agentStreaming) return;
+    const msg = chatInput.trim();
+    setChatInput("");
+    await streamAgentMode(msg, chatHistory);
   }
 
   async function handleSave() {
@@ -182,28 +301,31 @@ export default function EvaluatorPage() {
           </div>
 
           {/* Mode pills */}
-          <div className="flex gap-2">
-            {(["oferta", "deep", "training"] as Mode[]).map((m) => (
+          <div className="flex flex-wrap gap-2">
+            {(Object.keys(MODE_LABELS) as Mode[]).map((m) => (
               <button
                 key={m}
                 onClick={() => setMode(m)}
                 className={[
-                  "rounded-full px-4 py-1.5 text-xs font-semibold capitalize transition-colors",
+                  "rounded-full px-3 py-1.5 text-xs font-semibold transition-colors",
                   mode === m
                     ? "bg-indigo-600 text-white"
                     : "bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-slate-200",
                 ].join(" ")}
               >
-                {m}
+                {MODE_LABELS[m]}
               </button>
             ))}
           </div>
+
+          {/* Mode hint */}
+          <p className="text-xs text-slate-500 -mt-2">{MODE_HINTS[mode]}</p>
 
           {/* Textarea — grows to fill remaining space */}
           <textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Paste a job URL or full job description here…"
+            placeholder={MODE_HINTS[mode]}
             className="
               flex-1 resize-none rounded-lg border border-slate-600 bg-slate-900 p-4
               font-mono text-sm text-slate-200 placeholder-slate-600
@@ -212,10 +334,10 @@ export default function EvaluatorPage() {
             "
           />
 
-          {/* Evaluate button */}
+          {/* Submit button */}
           <button
             onClick={handleEvaluate}
-            disabled={loading || !input.trim()}
+            disabled={(isAgentMode ? agentStreaming : loading) || !input.trim()}
             className="
               flex w-full items-center justify-center gap-2 rounded-lg
               bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white
@@ -223,24 +345,97 @@ export default function EvaluatorPage() {
               disabled:cursor-not-allowed disabled:opacity-50
             "
           >
-            {loading ? (
+            {(isAgentMode ? agentStreaming : loading) ? (
               <>
                 <Loader2 size={15} className="animate-spin" />
-                Evaluating…
+                {isAgentMode ? "Running…" : "Evaluating…"}
               </>
             ) : (
               <>
                 <Zap size={15} />
-                Evaluate
+                {isAgentMode ? "Run" : "Evaluate"}
               </>
             )}
           </button>
         </div>
 
         {/* ────────────────────────────────────────────────────────────────
-            RIGHT PANEL — Results
+            RIGHT PANEL — Results or Chat
         ──────────────────────────────────────────────────────────────── */}
-        <div className="flex flex-col overflow-y-auto bg-slate-900">
+        <div className="flex flex-col overflow-hidden bg-slate-900">
+
+          {/* ── AGENT CHAT MODE ── */}
+          {isAgentMode && (
+            <div className="flex flex-1 flex-col overflow-hidden">
+              {/* Chat thread */}
+              <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                {chatHistory.length === 0 && !agentStreaming && (
+                  <div className="flex flex-col items-center justify-center h-full gap-3 text-slate-600">
+                    <Bot size={40} strokeWidth={1.2} />
+                    <p className="text-sm">{MODE_HINTS[mode]}</p>
+                  </div>
+                )}
+                {chatHistory.map((msg, i) => (
+                  <div key={i} className={`flex gap-3 ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+                    {msg.role === "assistant" && (
+                      <div className="flex-shrink-0 mt-1 h-6 w-6 rounded-full bg-indigo-600 flex items-center justify-center">
+                        <Bot size={12} className="text-white" />
+                      </div>
+                    )}
+                    <div className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap ${
+                      msg.role === "user"
+                        ? "bg-indigo-600 text-white rounded-tr-sm"
+                        : "bg-slate-800 text-slate-200 rounded-tl-sm"
+                    }`}>
+                      {msg.content}
+                    </div>
+                    {msg.role === "user" && (
+                      <div className="flex-shrink-0 mt-1 h-6 w-6 rounded-full bg-slate-600 flex items-center justify-center">
+                        <User size={12} className="text-white" />
+                      </div>
+                    )}
+                  </div>
+                ))}
+                {/* Streaming bubble */}
+                {agentStreaming && (
+                  <div className="flex gap-3 justify-start">
+                    <div className="flex-shrink-0 mt-1 h-6 w-6 rounded-full bg-indigo-600 flex items-center justify-center">
+                      <Bot size={12} className="text-white" />
+                    </div>
+                    <div className="max-w-[85%] rounded-2xl rounded-tl-sm bg-slate-800 px-4 py-3 text-sm leading-relaxed text-slate-200 whitespace-pre-wrap">
+                      {agentStreamText || <span className="flex gap-1 items-center text-slate-500"><Loader2 size={12} className="animate-spin" /> Running…</span>}
+                    </div>
+                  </div>
+                )}
+                <div ref={chatEndRef} />
+              </div>
+              {/* Reply input */}
+              {chatHistory.length > 0 && (
+                <div className="flex-shrink-0 border-t border-slate-700 p-3 flex gap-2">
+                  <input
+                    type="text"
+                    value={chatInput}
+                    onChange={(e) => setChatInput(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleChatReply(); }}}
+                    placeholder="Reply to Claude… (Enter to send)"
+                    disabled={agentStreaming}
+                    className="flex-1 rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-200 placeholder-slate-500 focus:border-indigo-500 focus:outline-none disabled:opacity-50"
+                  />
+                  <button
+                    onClick={handleChatReply}
+                    disabled={agentStreaming || !chatInput.trim()}
+                    className="flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-500 disabled:opacity-50"
+                  >
+                    <Send size={14} />
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ── EVAL SCORECARD MODE ── */}
+          {!isAgentMode && (
+            <div className="flex flex-col overflow-y-auto flex-1">
 
           {/* Empty state */}
           {!loading && !result && !error && (
@@ -384,6 +579,8 @@ export default function EvaluatorPage() {
               </button>
             </div>
           )}
+            </div> {/* end eval scroll container */}
+          )} {/* end !isAgentMode */}
         </div>
 
       </div>

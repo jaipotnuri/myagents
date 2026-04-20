@@ -98,6 +98,8 @@ export default function PipelinePage() {
   const [scraping, setScraping] = useState<number | null>(null);
   const [scrapeResult, setScrapeResult] = useState<ScrapeResult | null>(null);
   const [scrapeError, setScrapeError] = useState<string | null>(null);
+  const [batchSize, setBatchSize] = useState(5);
+  const [batchRunning, setBatchRunning] = useState(false);
   const nextId = useRef(100);
 
   // ── Fetch on mount ──
@@ -189,6 +191,31 @@ export default function PipelinePage() {
     }
   }
 
+  // ── Run Batch ──
+  async function runBatch() {
+    const pending = queue.filter((i) => i.status === "pending").slice(0, batchSize);
+    if (pending.length === 0) return;
+    setBatchRunning(true);
+    for (const item of pending) {
+      setQueue((prev) => prev.map((i) => i.id === item.id ? { ...i, status: "evaluating" } : i));
+      try {
+        const res = await fetch(`/api/agent/oferta`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message: item.url }),
+        });
+        if (res.ok || res.status === 200) {
+          setQueue((prev) => prev.map((i) => i.id === item.id ? { ...i, status: "done" } : i));
+        } else {
+          setQueue((prev) => prev.map((i) => i.id === item.id ? { ...i, status: "pending" } : i));
+        }
+      } catch {
+        setQueue((prev) => prev.map((i) => i.id === item.id ? { ...i, status: "pending" } : i));
+      }
+    }
+    setBatchRunning(false);
+  }
+
   // ── Progress stats ──
   const total = queue.length;
   const done = queue.filter((i) => i.status === "done").length;
@@ -197,12 +224,29 @@ export default function PipelinePage() {
   return (
     <div className="flex flex-col gap-6 min-h-0">
       {/* ── Page header ── */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-4">
         <h1 className="text-2xl font-bold text-white">Pipeline Queue</h1>
-        <button className="flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500 transition-colors">
-          <Play size={15} />
-          Run Batch
-        </button>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            <label className="text-xs text-slate-400 whitespace-nowrap">URLs per batch</label>
+            <input
+              type="number"
+              min={1}
+              max={20}
+              value={batchSize}
+              onChange={(e) => setBatchSize(Math.max(1, Math.min(20, Number(e.target.value))))}
+              className="w-16 rounded-lg border border-slate-700 bg-slate-800 px-2 py-1.5 text-center text-sm text-slate-200 focus:border-indigo-500 focus:outline-none"
+            />
+          </div>
+          <button
+            onClick={runBatch}
+            disabled={batchRunning || queue.filter((i) => i.status === "pending").length === 0}
+            className="flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <Play size={15} />
+            {batchRunning ? "Running…" : "Run Batch"}
+          </button>
+        </div>
       </div>
 
       {/* ── Add URL bar ── */}

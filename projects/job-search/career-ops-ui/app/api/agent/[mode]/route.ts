@@ -43,9 +43,9 @@ export async function POST(
   }
 
   // Parse request body
-  let body: { input?: string };
+  let body: { input?: string; conversationHistory?: { role: string; content: string }[] };
   try {
-    body = (await request.json()) as { input?: string };
+    body = (await request.json()) as { input?: string; conversationHistory?: { role: string; content: string }[] };
   } catch {
     return new Response(
       JSON.stringify({ error: "Invalid JSON body" }),
@@ -54,6 +54,7 @@ export async function POST(
   }
 
   const userMessage = (body.input ?? "").trim() || `Run the ${mode} command`;
+  const conversationHistory = body.conversationHistory ?? [];
   const startTime = Date.now();
 
   const encoder = new TextEncoder();
@@ -90,6 +91,7 @@ export async function POST(
         userMessage,
         careerOpsDir: CAREER_OPS_DIR,
         onEvent: emit,
+        conversationHistory,
       })
         .then(async ({ output, filesWritten }) => {
           const doneEvent: AgentEvent = {

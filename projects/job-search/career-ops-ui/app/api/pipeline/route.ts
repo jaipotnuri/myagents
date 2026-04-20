@@ -25,15 +25,25 @@ export async function GET() {
   try {
     const raw = await fs.readFile(filePath, "utf-8");
 
-    const items = raw
-      .split("\n")
-      .map((line) => line.trim())
-      .filter((line) => line.startsWith("http"))
-      .map((url, index) => ({
-        id: index + 1,
-        url,
-        status: "pending" as const,
-      }));
+    // Extract URLs from lines in any format:
+    //   bare:         https://example.com
+    //   markdown list: - [ ] https://example.com | Company | Role
+    //   markdown link: [text](https://example.com)
+    const urlRegex = /https?:\/\/[^\s|)\]>]+/g;
+    const seen = new Set<string>();
+    const items: { id: number; url: string; status: "pending" }[] = [];
+
+    for (const line of raw.split("\n")) {
+      const matches = line.match(urlRegex);
+      if (!matches) continue;
+      for (const url of matches) {
+        const clean = url.replace(/[.,;:]+$/, ""); // strip trailing punctuation
+        if (!seen.has(clean)) {
+          seen.add(clean);
+          items.push({ id: items.length + 1, url: clean, status: "pending" });
+        }
+      }
+    }
 
     return NextResponse.json(items);
   } catch (err: unknown) {
