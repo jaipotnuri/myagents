@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.jaipotnuri.daily-digest-smtp</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/usr/bin/python3</string>
+        <string>/Users/jaipotnuri/myrepo/myagents/projects/mydailyagents/run_digest.py</string>
+    </array>
+
+    <!-- Run at 8:05 AM daily (5 min after Cowork's Chrome MCP attempt) -->
+    <key>StartCalendarInterval</key>
+    <dict>
+        <key>Hour</key>
+        <integer>8</integer>
+        <key>Minute</key>
+        <integer>5</integer>
+    </dict>
+
+    <key>StandardOutPath</key>
+    <string>/Users/jaipotnuri/myrepo/myagents/projects/mydailyagents/logs/digest.log</string>
+
+    <key>StandardErrorPath</key>
+    <string>/Users/jaipotnuri/myrepo/myagents/projects/mydailyagents/logs/digest-error.log</string>
+
+    <!-- Keep the job enabled after failures -->
+    <key>KeepAlive</key>
+    <false/>
+
+    <key>RunAtLoad</key>
+    <false/>
+</dict>
+</plist>
