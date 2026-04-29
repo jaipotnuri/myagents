@@ -15,6 +15,7 @@ from datetime import datetime
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 # ---------------------------------------------------------------------------
 # Config
@@ -23,6 +24,12 @@ from pathlib import Path
 SCRIPT_DIR = Path(__file__).parent
 TO_EMAIL = "jaipotnuri7@gmail.com"
 NOTE_NAME = "2026 - To Do"
+LOCAL_TZ = ZoneInfo("America/Chicago")
+
+
+def now_local() -> datetime:
+    """Current time in the user's local timezone (independent of system TZ)."""
+    return datetime.now(LOCAL_TZ)
 
 # ---------------------------------------------------------------------------
 # Load .env if present
@@ -58,8 +65,23 @@ tell application "Notes"
 end tell
 """.strip()
 
+_HTML_ENTITIES = {"&nbsp;": " ", "&amp;": "&", "&lt;": "<", "&gt;": ">", "&#39;": "'", "&quot;": '"'}
+
+
+def _clean_html_fragment(fragment: str) -> str:
+    """Strip tags + decode common entities + collapse whitespace."""
+    text = re.sub(r"<[^>]+>", " ", fragment)
+    for entity, char in _HTML_ENTITIES.items():
+        text = text.replace(entity, char)
+    return re.sub(r"\s+", " ", text).strip()
+
+
 def get_note_items(note_name: str) -> list[str]:
-    """Return a list of plain-text lines from the Apple Note (HTML stripped)."""
+    """Return the to-do list items from the Apple Note.
+
+    Extracts only <li> elements from the first <ol>/<ul> block so headings
+    and section labels (e.g. "AI projects") are excluded.
+    """
     script = APPLESCRIPT.format(note_name=note_name)
     try:
         result = subprocess.run(
@@ -70,17 +92,14 @@ def get_note_items(note_name: str) -> list[str]:
         if html.startswith("ERROR"):
             print(f"  Notes: {html}", file=sys.stderr)
             return []
-        # Strip HTML tags
-        text = re.sub(r"<[^>]+>", " ", html)
-        text = re.sub(r"&nbsp;", " ", text)
-        text = re.sub(r"&amp;", "&", text)
-        text = re.sub(r"&lt;", "<", text)
-        text = re.sub(r"&gt;", ">", text)
-        # Split into non-empty lines
-        lines = [l.strip() for l in text.splitlines() if l.strip()]
-        # Filter out very short lines (likely formatting artifacts)
-        lines = [l for l in lines if len(l) > 3]
-        return lines
+        # Find the first ordered/unordered list — that's the to-do list.
+        list_match = re.search(r"<(ol|ul)\b[^>]*>(.*?)</\1>", html, re.IGNORECASE | re.DOTALL)
+        if not list_match:
+            return []
+        # Extract each <li>...</li>
+        raw_items = re.findall(r"<li\b[^>]*>(.*?)</li>", list_match.group(2), re.IGNORECASE | re.DOTALL)
+        items = [_clean_html_fragment(raw) for raw in raw_items]
+        return [item for item in items if item]
     except Exception as e:
         print(f"  Notes read error: {e}", file=sys.stderr)
         return []
@@ -123,7 +142,7 @@ def send_email(subject: str, body: str) -> bool:
 FLAG_DIR = SCRIPT_DIR / "logs"
 
 def get_flag_path() -> Path:
-    date_str = datetime.now().strftime("%Y-%m-%d")
+    date_str = now_local().strftime("%Y-%m-%d")
     return FLAG_DIR / f"sent-{date_str}.flag"
 
 def already_sent_today() -> bool:
@@ -136,7 +155,7 @@ def already_sent_today() -> bool:
 def write_sent_flag():
     FLAG_DIR.mkdir(parents=True, exist_ok=True)
     flag = get_flag_path()
-    flag.write_text(f"sent via SMTP at {datetime.now().isoformat()}\n")
+    flag.write_text(f"sent via SMTP at {now_local().isoformat()}\n")
 
 # ---------------------------------------------------------------------------
 # Main
@@ -149,7 +168,7 @@ def main():
     if already_sent_today():
         sys.exit(0)
 
-    today = datetime.now().strftime("%A, %B %d, %Y")
+    today = now_local().strftime("%A, %B %d, %Y")
     subject = f"🗓 Daily Digest — {today}"
 
     print("Step 1 — Reading Apple Notes...")
