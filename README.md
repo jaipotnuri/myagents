@@ -38,7 +38,7 @@ A personal AI agent workspace for daily research, learning, and high-impact work
 
 ## Projects
 
-Self-contained projects with their own agents, data, and outputs:
+Self-contained projects with their own agents, data, and outputs. See [projects/README.md](projects/README.md) for the index.
 
 ### job-search (`projects/job-search/`)
 
@@ -60,6 +60,17 @@ An AI-powered job search pipeline built on [career-ops](https://github.com/santi
 
 See [projects/job-search/README.md](projects/job-search/README.md) for full docs.
 
+### mydailyagents (`projects/mydailyagents/`)
+
+Automated 8 AM digest email — top 2 to-dos from the `2026 - To Do` Apple Note plus today's Google Calendar meetings.
+
+**Two redundant delivery paths:**
+- Option 1 — Cowork scheduled task `notes-daily-digest` sends via Gmail web UI through Chrome MCP (cron `0 8 * * *`)
+- Option 2 — macOS launchd `com.jaipotnuri.daily-digest-smtp` runs `run_digest.py` at 8:05 AM and SMTP-sends via Gmail App Password
+- A shared `logs/sent-YYYY-MM-DD.flag` (date in America/Chicago) prevents duplicate sends
+
+See [projects/mydailyagents/README.md](projects/mydailyagents/README.md) for setup, file layout, and operational details.
+
 ---
 
 ## Layout
@@ -79,7 +90,8 @@ myagents/
 │   ├── learning/
 │   └── writing/
 └── projects/
-    └── job-search/              # AI Engineer job search pipeline
+    ├── job-search/              # AI Engineer job search pipeline
+    └── mydailyagents/           # 8 AM Apple Notes + Calendar digest (Chrome MCP + SMTP)
 ```
 
 ---

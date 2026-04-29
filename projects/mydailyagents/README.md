@@ -1,75 +1,137 @@
 # mydailyagents
 
-Utility scripts for daily automated tasks — starting with email delivery via Gmail SMTP.
+Automated morning digest — every day at 8 AM, Jai gets an email containing the top 2 to-dos from his Apple Note `2026 - To Do` plus today's Google Calendar meetings.
+
+The system has two redundant delivery paths so a missed cron run or a Cowork-down day still gets the email out.
 
 ---
 
-## send_digest.py
+## How it runs
 
-Sends a plain-text email through Gmail using an App Password. No external dependencies — pure Python stdlib.
+Two coordinated runners take turns. Whichever one fires first writes a flag for the day; the other sees the flag and exits cleanly, so the inbox never gets a duplicate.
 
-### Prerequisites: Gmail App Password
+| Path | Trigger | Runner | Sends via |
+|------|---------|--------|-----------|
+| Option 1 (preferred) | Cowork scheduled task `notes-daily-digest`, cron `0 8 * * *` local | Claude session | Gmail web UI through Chrome MCP |
+| Option 2 (fallback) | macOS launchd `com.jaipotnuri.daily-digest-smtp`, 8:05 AM local | `run_digest.py` | Gmail SMTP via App Password |
+| Option 3 (last resort) | Manually invoked from the Cowork session | Claude session | Gmail MCP `create_draft` |
 
-Your regular Gmail password won't work here. You need a 16-character **App Password**:
+A 5-minute offset between Option 1 (8:00 AM) and Option 2 (8:05 AM) gives the Chrome MCP path room to finish before SMTP wakes up. Option 2 reads `logs/sent-YYYY-MM-DD.flag` (in America/Chicago) and exits 0 if it's already there.
 
-1. Go to [myaccount.google.com](https://myaccount.google.com)
-2. Navigate to **Security** → **2-Step Verification** (must be enabled)
-3. Scroll down to **App Passwords**
-4. Create one — name it something like "Daily Digest Script"
-5. Copy the 16-character password (format: `xxxx xxxx xxxx xxxx`)
+---
 
-### Setup
+## Files
 
-Copy `.env.example` to `.env` and fill in your credentials:
+```
+mydailyagents/
+├── run_digest.py                          # Option 2 SMTP runner (the main script)
+├── send_digest.py                         # legacy minimal SMTP CLI (kept for ad-hoc sends)
+├── com.jaipotnuri.daily-digest-smtp.plist # launchd job that runs run_digest.py at 8:05 AM
+├── .env                                   # GMAIL_FROM + GMAIL_APP_PASSWORD (gitignored)
+├── .env.example                           # template
+├── .gitignore
+├── logs/
+│   ├── digest.log                         # stdout from launchd runs
+│   ├── digest-error.log                   # stderr from launchd runs
+│   └── sent-YYYY-MM-DD.flag               # written by whichever path sent first today
+└── README.md
+```
+
+The Cowork scheduled task itself lives under `~/Documents/Claude/Scheduled/notes-daily-digest/SKILL.md` — that file holds the full Option 1 / Option 2 / Option 3 playbook.
+
+---
+
+## run_digest.py
+
+Native-macOS runner that reads Apple Notes via `osascript`, builds the digest, and sends through Gmail SMTP.
+
+Behavior:
+1. Loads `.env` if present (no python-dotenv dep — pure stdlib).
+2. Checks `logs/sent-YYYY-MM-DD.flag` (date in America/Chicago). If present, exits 0 — Option 1 already sent today.
+3. Runs an AppleScript to fetch the body of the `2026 - To Do` note. Extracts only `<li>` items from the first `<ol>`/`<ul>` block, so headings and section labels (e.g. "AI projects") are skipped.
+4. Composes subject `🗓 Daily Digest — <Weekday, Month DD, YYYY>` (date pinned to America/Chicago via `zoneinfo.ZoneInfo`, independent of system TZ).
+5. SMTP-sends to `jaipotnuri7@gmail.com` over `smtp.gmail.com:587` with STARTTLS.
+6. On success, writes `logs/sent-YYYY-MM-DD.flag` so the SKILL.md path also sees the day as done.
+
+Exit codes: 0 on success or skip, 1 on send failure.
+
+---
+
+## Setup
+
+### 1. Gmail App Password
+
+The script needs an App Password (not your regular Gmail password). Two-step verification must be on.
+
+1. Go to [myaccount.google.com](https://myaccount.google.com) → **Security** → **App Passwords**.
+2. Create one — name it "mydailyagents".
+3. Copy the 16-character password.
+
+### 2. `.env`
 
 ```bash
 cp .env.example .env
-# edit .env and set GMAIL_APP_PASSWORD
+# edit .env and set:
+#   GMAIL_FROM=jaipotnuri7@gmail.com
+#   GMAIL_APP_PASSWORD=xxxxxxxxxxxxxxxx
 ```
 
-Then export the variables before running:
+`.env` is gitignored. Never commit it.
+
+### 3. Install the launchd job (Option 2)
 
 ```bash
-export GMAIL_FROM=jaipotnuri7@gmail.com
-export GMAIL_APP_PASSWORD=xxxx-xxxx-xxxx-xxxx
+cp com.jaipotnuri.daily-digest-smtp.plist ~/Library/LaunchAgents/
+launchctl load ~/Library/LaunchAgents/com.jaipotnuri.daily-digest-smtp.plist
 ```
 
-Or source a `.env` file:
+The plist's hard-coded paths point at `/Users/jaipotnuri/myrepo/myagents/projects/mydailyagents/`. Edit it before loading if your repo lives elsewhere.
+
+To unload later:
+```bash
+launchctl unload ~/Library/LaunchAgents/com.jaipotnuri.daily-digest-smtp.plist
+```
+
+### 4. The Cowork scheduled task (Option 1)
+
+The `notes-daily-digest` task is already created in Cowork. To inspect or edit, look in the Cowork sidebar under Scheduled or open `~/Documents/Claude/Scheduled/notes-daily-digest/SKILL.md`.
+
+---
+
+## Manual run
 
 ```bash
-set -a && source .env && set +a
+cd ~/myrepo/myagents/projects/mydailyagents
+python3 run_digest.py
 ```
 
-### Usage
+If today's flag exists you'll get `✓ Option 1 already sent today (flag: ...). Skipping SMTP.` and exit 0. To force a send, delete the flag first:
 
 ```bash
-# Basic test
-python send_digest.py --subject "Test" --body "Hello from the digest script"
-
-# Send to a specific recipient
-python send_digest.py --to someone@example.com --subject "Daily Digest" --body "Here's your update..."
-
-# Multi-line body
-python send_digest.py --subject "Daily Summary" --body "Line 1\nLine 2\nLine 3"
+rm -f logs/sent-$(TZ=America/Chicago date +%Y-%m-%d).flag
+python3 run_digest.py
 ```
 
-### Arguments
+---
 
-| Argument | Required | Default | Description |
-|----------|----------|---------|-------------|
-| `--to` | No | jaipotnuri7@gmail.com | Recipient email address |
-| `--subject` | Yes | — | Email subject line |
-| `--body` | Yes | — | Plain text body (supports `\n` newlines) |
+## send_digest.py (legacy)
 
-### Environment Variables
+A minimal CLI for ad-hoc test sends — handy when you want to fire off a quick email without rebuilding the digest body.
 
-| Variable | Required | Default | Description |
-|----------|----------|---------|-------------|
-| `GMAIL_APP_PASSWORD` | **Yes** | — | 16-char Gmail App Password |
-| `GMAIL_FROM` | No | jaipotnuri7@gmail.com | Sender address |
+```bash
+python send_digest.py --subject "Test" --body "hello"
+```
 
-### Security note
+| Argument | Required | Default |
+|----------|----------|---------|
+| `--to` | No | jaipotnuri7@gmail.com |
+| `--subject` | Yes | — |
+| `--body` | Yes | — |
 
-**Never commit `.env` or your App Password to git.** `.env` is in `.gitignore` by convention — double-check before pushing. The `.env.example` file (with placeholder values) is safe to commit.
+Same `.env` (`GMAIL_FROM`, `GMAIL_APP_PASSWORD`) applies.
 
-If your App Password is ever exposed, revoke it immediately at myaccount.google.com → Security → App Passwords.
+---
+
+## Security
+
+`.env` and the App Password should never hit the repo. If the password leaks, revoke it immediately at myaccount.google.com → Security → App Passwords.
